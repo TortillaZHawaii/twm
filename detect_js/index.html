@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Hello OpenCV.js</title>
+    <style>
+        .inputoutput img,
+        .inputoutput canvas {
+            max-width: 100%;
+            /* Makes image and canvas not exceed the width of their container */
+            max-height: 400px;
+            /* Adjust this value based on your page layout */
+            display: block;
+            /* Ensures max-width and max-height are respected */
+            margin: 0 auto;
+            /* Centers the image/canvas if it's smaller than the max width */
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Hello OpenCV.js</h2>
+    <p id="status">OpenCV.js is loading...</p>
+    <div>
+        <div class="inputoutput">
+            <img id="imageSrc" alt="No Image" src="../examples/far_full.jpg" />
+            <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="canvasOutput"></canvas>
+            <div class="caption">canvasOutput</div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        let imgElement = document.getElementById('imageSrc');
+        let inputElement = document.getElementById('fileInput');
+        inputElement.addEventListener('change', (e) => {
+            imgElement.src = URL.createObjectURL(e.target.files[0]);
+        }, false);
+
+        imgElement.onload = function () {
+            let src = cv.imread(imgElement);
+            // Find edges using Hough Transform
+            let dst = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
+            let lines = new cv.Mat();
+            let color = new cv.Scalar(255, 0, 0);
+            cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+            cv.Canny(src, src, 200, 300, 3);
+            // You can try more different parameters
+            cv.HoughLinesP(src, lines, 1, Math.PI / 180, 2, 0, 0);
+            // draw lines
+            for (let i = 0; i < lines.rows; ++i) {
+                let startPoint = new cv.Point(lines.data32S[i * 4], lines.data32S[i * 4 + 1]);
+                let endPoint = new cv.Point(lines.data32S[i * 4 + 2], lines.data32S[i * 4 + 3]);
+                cv.line(dst, startPoint, endPoint, color);
+            }
+            cv.imshow('canvasOutput', dst);
+            // Dispose the mats to free memory
+            src.delete(); dst.delete(); lines.delete();
+        };
+
+
+
+        var Module = {
+            // https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized
+            onRuntimeInitialized() {
+                document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+            }
+        };
+    </script>
+
+
+    <script async src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
+</body>
+
+</html>
