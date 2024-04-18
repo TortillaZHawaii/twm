@@ -17,15 +17,30 @@
             /* Centers the image/canvas if it's smaller than the max width */
         }
     </style>
+    <script async src="opencv.js" type="text/javascript"></script>
 </head>
 
 <body>
     <h2>Hello OpenCV.js</h2>
     <p id="status">OpenCV.js is loading...</p>
+    <button onclick="runDiceDetection()">Run Dice Detection</button>
     <div>
+        <p id="timeTaken"></p>
         <div class="inputoutput">
             <img id="imageSrc" alt="No Image" src="../examples/far_full.jpg" />
             <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="hsvOutput"></canvas>
+            <div class="caption">hsvOutput</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="hsvBlackOutput"></canvas>
+            <div class="caption">hsvBlackOutput</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="hsvBlackOpened"></canvas>
+            <div class="caption">hsvBlackOpened</div>
         </div>
         <div class="inputoutput">
             <canvas id="canvasOutput"></canvas>
@@ -33,22 +48,39 @@
         </div>
     </div>
     <script type="text/javascript">
-        let imgElement = document.getElementById('imageSrc');
-        let inputElement = document.getElementById('fileInput');
-        inputElement.addEventListener('change', (e) => {
-            imgElement.src = URL.createObjectURL(e.target.files[0]);
-        }, false);
+        function runDiceDetection() {
+            var startTime = performance.now();
 
-        imgElement.onload = function () {
-            let src = cv.imread(imgElement);
+            let src = cv.imread('imageSrc');
             // Find edges using Hough Transform
             let dst = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
+
+            // Convert image to HSV
+            let hsv = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
+            cv.cvtColor(src, hsv, cv.COLOR_RGB2HSV, 0);
+            cv.imshow('hsvOutput', hsv);
+
+            // Threshold the HSV image to get only black colors 
+            let hsvBlack = new cv.Mat();
+            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [0, 0, 0, 0]);
+            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180, 255, 50, 0]);
+            cv.inRange(hsv, low, high, hsvBlack);
+            cv.imshow('hsvBlackOutput', hsvBlack);
+
+            // Mask opening
+            let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+            let anchor = new cv.Point(-1, -1);
+            let iterations = 1;
+            let hsvBlackOpened = new cv.Mat();
+            cv.morphologyEx(hsvBlack, hsvBlackOpened, cv.MORPH_OPEN, kernel, anchor, iterations);
+            cv.imshow('hsvBlackOpened', hsvBlackOpened);
+
             let lines = new cv.Mat();
             let color = new cv.Scalar(255, 0, 0);
-            cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
-            cv.Canny(src, src, 200, 300, 3);
+            // cv.cvtColor(hsv, src, cv.COLOR_RGBA2GRAY, 0);
+            cv.Canny(hsvBlackOpened, hsvBlackOpened, 220, 250, 5);
             // You can try more different parameters
-            cv.HoughLinesP(src, lines, 1, Math.PI / 180, 2, 0, 0);
+            cv.HoughLinesP(hsvBlackOpened, lines, 1, Math.PI / 180, 2, 0, 0);
             // draw lines
             for (let i = 0; i < lines.rows; ++i) {
                 let startPoint = new cv.Point(lines.data32S[i * 4], lines.data32S[i * 4 + 1]);
@@ -57,10 +89,20 @@
             }
             cv.imshow('canvasOutput', dst);
             // Dispose the mats to free memory
-            src.delete(); dst.delete(); lines.delete();
-        };
+            src.delete(); hsv.delete(); hsvBlack.delete(); hsvBlackOpened.delete(); dst.delete(); lines.delete();
 
+            var endTime = performance.now();
+            var timeTaken = endTime - startTime;
+            document.getElementById('timeTaken').innerHTML = 'Time taken: ' + timeTaken + 'ms';
+        }
 
+        let imgElement = document.getElementById('imageSrc');
+        let inputElement = document.getElementById('fileInput');
+        inputElement.addEventListener('change', (e) => {
+            imgElement.src = URL.createObjectURL(e.target.files[0]);
+        }, false);
+
+        imgElement.onload = runDiceDetection;
 
         var Module = {
             // https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized
@@ -71,7 +113,6 @@
     </script>
 
 
-    <script async src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
 </body>
 
 </html>
