@@ -209,12 +209,11 @@
             imgElement.src = URL.createObjectURL(e.target.files[0]);
         }, false);
 
-        imgElement.onload = runDiceDetection;
-
         var Module = {
             // https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized
             onRuntimeInitialized() {
                 document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+                imgElement.onload = runDiceDetection;
             }
         };
     </script>
