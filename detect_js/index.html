@@ -106,6 +106,15 @@
             return hsvPurple;
         }
 
+        function getBlueMask(hsv) {
+            // Threshold the HSV image to get only blue colors 
+            let hsvBlue = new cv.Mat();
+            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.527, 255 * 0.327, 255 * 0.236, 0]);
+            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.684, 255, 255, 0]);
+            cv.inRange(hsv, low, high, hsvBlue);
+            return hsvBlue;
+        }
+
         function runDiceDetection() {
             var startTime = performance.now();
 
