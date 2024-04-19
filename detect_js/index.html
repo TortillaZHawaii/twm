@@ -39,6 +39,10 @@
             <div class="caption">hsvBlackOutput</div>
         </div>
         <div class="inputoutput">
+            <canvas id="hsvYellowOutput"></canvas>
+            <div class="caption">hsvYellowOutput</div>
+        </div>
+        <div class="inputoutput">
             <canvas id="hsvBlackOpened"></canvas>
             <div class="caption">hsvBlackOpened</div>
         </div>
@@ -48,6 +52,24 @@
         </div>
     </div>
     <script type="text/javascript">
+        function getBlackMask(hsv) {
+            // Threshold the HSV image to get only black colors 
+            let hsvBlack = new cv.Mat();
+            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [0, 0, 0, 0]);
+            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180, 255, 50, 0]);
+            cv.inRange(hsv, low, high, hsvBlack);
+            return hsvBlack;
+        }
+
+        function getYellowMask(hsv) {
+            // Threshold the HSV image to get only yellow colors 
+            let hsvYellow = new cv.Mat();
+            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.085, 255 * 0.220, 255 * 0.204, 0]);
+            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.247, 255, 255, 0]);
+            cv.inRange(hsv, low, high, hsvYellow);
+            return hsvYellow;
+        }
+
         function runDiceDetection() {
             var startTime = performance.now();
 
@@ -61,11 +83,12 @@
             cv.imshow('hsvOutput', hsv);
 
             // Threshold the HSV image to get only black colors 
-            let hsvBlack = new cv.Mat();
-            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [0, 0, 0, 0]);
-            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180, 255, 50, 0]);
-            cv.inRange(hsv, low, high, hsvBlack);
+            let hsvBlack = getBlackMask(hsv);
             cv.imshow('hsvBlackOutput', hsvBlack);
+
+            // Threshold the HSV image to get only yellow colors
+            let hsvYellow = getYellowMask(hsv);
+            cv.imshow('hsvYellowOutput', hsvYellow);
 
             // Mask opening
             let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
@@ -89,7 +112,9 @@
             }
             cv.imshow('canvasOutput', dst);
             // Dispose the mats to free memory
-            src.delete(); hsv.delete(); hsvBlack.delete(); hsvBlackOpened.delete(); dst.delete(); lines.delete();
+            src.delete(); hsv.delete(); hsvBlackOpened.delete(); dst.delete(); lines.delete();
+            hsvBlack.delete();
+            hsvYellow.delete();
 
             var endTime = performance.now();
             var timeTaken = endTime - startTime;
