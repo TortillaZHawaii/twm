@@ -51,6 +51,14 @@
             <div class="caption">hsvPurpleOutput</div>
         </div>
         <div class="inputoutput">
+            <canvas id="hsvBlueOutput"></canvas>
+            <div class="caption">hsvBlueOutput</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="hsvGreenOutput"></canvas>
+            <div class="caption">hsvGreenOutput</div>
+        </div>
+        <div class="inputoutput">
             <canvas id="hsvBlackOpened"></canvas>
             <div class="caption">hsvBlackOpened</div>
         </div>
@@ -115,6 +123,15 @@
             return hsvBlue;
         }
 
+        function getGreenMask(hsv) {
+            // Threshold the HSV image to get only green colors 
+            let hsvGreen = new cv.Mat();
+            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.354, 255 * 0.109, 255 * 0.07, 0]);
+            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.497, 255, 255, 0]);
+            cv.inRange(hsv, low, high, hsvGreen);
+            return hsvGreen;
+        }
+
         function runDiceDetection() {
             var startTime = performance.now();
 
@@ -143,6 +160,14 @@
             let hsvPurple = getPurpleMask(hsv);
             cv.imshow('hsvPurpleOutput', hsvPurple);
 
+            // Threshold the HSV image to get only blue colors
+            let hsvBlue = getBlueMask(hsv);
+            cv.imshow('hsvBlueOutput', hsvBlue);
+
+            // Threshold the HSV image to get only green colors
+            let hsvGreen = getGreenMask(hsv);
+            cv.imshow('hsvGreenOutput', hsvGreen);
+
             // Mask opening
             let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
             let anchor = new cv.Point(-1, -1);
@@ -170,6 +195,8 @@
             hsvYellow.delete();
             hsvRed.delete();
             hsvPurple.delete();
+            hsvBlue.delete();
+            hsvGreen.delete();
 
             var endTime = performance.now();
             var timeTaken = endTime - startTime;
