@@ -43,6 +43,10 @@
             <div class="caption">withTemplate</div>
         </div>
         <div class="inputoutput">
+            <canvas id="gridOnly"></canvas>
+            <div class="caption">gridOnly</div>
+        </div>
+        <div class="inputoutput">
             <canvas id="hsvOutput"></canvas>
             <div class="caption">hsvOutput</div>
         </div>
@@ -87,20 +91,44 @@
             return scale;
         }
 
+        function getTemplateGridRoi(template, scale = 1.0) {
+            let left = 35;
+            let top = 850;
+            let right = 530;
+            let bottom = 1245;
+            let rowsFromPng = 1280;
+            let colsFromPng = 565;
+            let templateCols = template.cols;
+            let templateRows = template.rows;
+            let scaleCols = templateCols / colsFromPng * scale;
+            let scaleRows = templateRows / rowsFromPng * scale;
+            return new cv.Rect(left * scaleCols, top * scaleRows, (right - left) * scaleCols, (bottom - top) * scaleRows);
+        }
+
+        // Draw the template on the dst image
+        // Returns the grid region of the dst image
         function drawTemplateOn(dst) {
             let template = cv.imread('templateImage');
-            // let template = cv.imread('templateImage', cv.IMREAD_UNCHANGED);
+
             // rescale the template to match the dst height
             let padding = 0.1; // % of padding
             let scale = getScale(template, dst, padding);
             let templateRescaled = new cv.Mat();
             cv.resize(template, templateRescaled, new cv.Size(template.cols * scale, template.rows * scale), 0, 0, cv.INTER_AREA);
 
+            let templateRoi = getTemplateGridRoi(template, scale);
+
             cv.imshow('templateRescaled', templateRescaled);
 
             // Draw the template in the middle of the dst
             let x = (dst.cols - templateRescaled.cols) / 2;
             let y = (dst.rows - templateRescaled.rows) / 2;
+
+            templateRoi.x += x;
+            templateRoi.y += y;
+
+            let grid = dst.roi(templateRoi);
+            cv.imshow('gridOnly', grid);
 
             // Can't use cv.addWeighted because the template has an alpha channel
             for (let i = 0; i < templateRescaled.rows; i++) {
@@ -117,7 +145,7 @@
 
             template.delete(); templateRescaled.delete();
 
-            return dst;
+            return grid;
         }
 
         function getBlackMask(hsv) {
