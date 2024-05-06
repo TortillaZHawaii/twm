@@ -31,8 +31,12 @@
             <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
         </div>
         <div class="inputoutput">
-            <img id="templateImage" alt="template" src="../resources/template.svg"></canvas>
+            <img id="templateImage" alt="template" src="../resources/template.png"></canvas>
             <div class="caption">template</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="templateRescaled"></canvas>
+            <div class="caption">templateRescaled</div>
         </div>
         <div class="inputoutput">
             <canvas id="withTemplate"></canvas>
@@ -76,6 +80,46 @@
         </div>
     </div>
     <script type="text/javascript">
+        function getScale(src, dst, padding = 0.1) {
+            let scaleHorizontal = (dst.cols * (1 - padding * 2)) / src.cols;
+            let scaleVertical = (dst.rows * (1 - padding * 2)) / src.rows;
+            let scale = Math.min(scaleHorizontal, scaleVertical);
+            return scale;
+        }
+
+        function drawTemplateOn(dst) {
+            let template = cv.imread('templateImage');
+            // let template = cv.imread('templateImage', cv.IMREAD_UNCHANGED);
+            // rescale the template to match the dst height
+            let padding = 0.1; // % of padding
+            let scale = getScale(template, dst, padding);
+            let templateRescaled = new cv.Mat();
+            cv.resize(template, templateRescaled, new cv.Size(template.cols * scale, template.rows * scale), 0, 0, cv.INTER_AREA);
+
+            cv.imshow('templateRescaled', templateRescaled);
+
+            // Draw the template in the middle of the dst
+            let x = (dst.cols - templateRescaled.cols) / 2;
+            let y = (dst.rows - templateRescaled.rows) / 2;
+
+            // Can't use cv.addWeighted because the template has an alpha channel
+            for (let i = 0; i < templateRescaled.rows; i++) {
+                for (let j = 0; j < templateRescaled.cols; j++) {
+                    let pixel = templateRescaled.ucharPtr(i, j);
+                    if (pixel[3] > 0) {
+                        let dstPixel = dst.ucharPtr(y + i, x + j);
+                        dstPixel[0] = pixel[0];
+                        dstPixel[1] = pixel[1];
+                        dstPixel[2] = pixel[2];
+                    }
+                }
+            }
+
+            template.delete(); templateRescaled.delete();
+
+            return dst;
+        }
+
         function getBlackMask(hsv) {
             // Threshold the HSV image to get only black colors 
             let hsvBlack = new cv.Mat();
@@ -146,6 +190,12 @@
             let src = cv.imread('imageSrc');
             // Find edges using Hough Transform
             let dst = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
+
+            // Draw the template on the src copy
+            let copy = src.clone();
+            drawTemplateOn(copy);
+            cv.imshow('withTemplate', copy);
+            copy.delete();
 
             // Convert image to HSV
             let hsv = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
