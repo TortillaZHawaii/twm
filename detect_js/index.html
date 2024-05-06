@@ -55,24 +55,48 @@
             <div class="caption">hsvBlackOutput</div>
         </div>
         <div class="inputoutput">
+            <canvas id="hsvBlackOutputContours"></canvas>
+            <div class="caption">hsvBlackOutputContours</div>
+        </div>
+        <div class="inputoutput">
             <canvas id="hsvYellowOutput"></canvas>
             <div class="caption">hsvYellowOutput</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="hsvYellowOutputContours"></canvas>
+            <div class="caption">hsvYellowOutputContours</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvRedOutput"></canvas>
             <div class="caption">hsvRedOutput</div>
         </div>
         <div class="inputoutput">
+            <canvas id="hsvRedOutputContours"></canvas>
+            <div class="caption">hsvRedOutputContours</div>
+        </div>
+        <div class="inputoutput">
             <canvas id="hsvPurpleOutput"></canvas>
             <div class="caption">hsvPurpleOutput</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="hsvPurpleOutputContours"></canvas>
+            <div class="caption">hsvPurpleOutputContours</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvBlueOutput"></canvas>
             <div class="caption">hsvBlueOutput</div>
         </div>
         <div class="inputoutput">
+            <canvas id="hsvBlueOutputContours"></canvas>
+            <div class="caption">hsvBlueOutputContours</div>
+        </div>
+        <div class="inputoutput">
             <canvas id="hsvGreenOutput"></canvas>
             <div class="caption">hsvGreenOutput</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="hsvGreenOutputContours"></canvas>
+            <div class="caption">hsvGreenOutputContours</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvBlackOpened"></canvas>
@@ -84,6 +108,7 @@
         </div>
     </div>
     <script type="text/javascript">
+
         function getScale(src, dst, padding = 0.1) {
             let scaleHorizontal = (dst.cols * (1 - padding * 2)) / src.cols;
             let scaleVertical = (dst.rows * (1 - padding * 2)) / src.rows;
@@ -210,6 +235,26 @@
             let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.497, 255, 255, 0]);
             cv.inRange(hsv, low, high, hsvGreen);
             return hsvGreen;
+        }     
+
+        function getContours(hsv, imgSrcName) {
+            // Function to get contours for given hsv and draw them
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+
+            cv.findContours(hsv, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+            
+            let dst = cv.Mat.zeros(hsv.rows, hsv.cols, cv.CV_8UC3);
+
+            for (let i = 0; i < contours.size(); ++i) {
+                let color = new cv.Scalar(255, 255, 255);
+                cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+            }
+            
+            cv.imshow(imgSrcName, dst);
+            dst.delete();
+
+            return contours;
         }
 
         function runDiceDetection() {
@@ -221,38 +266,44 @@
 
             // Draw the template on the src copy
             let copy = src.clone();
-            drawTemplateOn(copy);
+            let grid = drawTemplateOn(copy);
             cv.imshow('withTemplate', copy);
             copy.delete();
 
             // Convert image to HSV
-            let hsv = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
-            cv.cvtColor(src, hsv, cv.COLOR_RGB2HSV, 0);
+            let hsv = cv.Mat.zeros(grid.rows, grid.cols, cv.CV_8UC3);
+            cv.cvtColor(grid, hsv, cv.COLOR_RGB2HSV, 0);
             cv.imshow('hsvOutput', hsv);
 
             // Threshold the HSV image to get only black colors 
             let hsvBlack = getBlackMask(hsv);
             cv.imshow('hsvBlackOutput', hsvBlack);
+            let blackCountours = getContours(hsvBlack, hsvBlackOutputContours);
 
             // Threshold the HSV image to get only yellow colors
             let hsvYellow = getYellowMask(hsv);
             cv.imshow('hsvYellowOutput', hsvYellow);
+            let yellowCountours = getContours(hsvYellow, hsvYellowOutputContours);
 
             // Threshold the HSV image to get only red colors
             let hsvRed = getRedMask(hsv);
             cv.imshow('hsvRedOutput', hsvRed);
+            let redCountours = getContours(hsvRed, hsvRedOutputContours);
 
             // Threshold the HSV image to get only purple colors
             let hsvPurple = getPurpleMask(hsv);
             cv.imshow('hsvPurpleOutput', hsvPurple);
+            let purpleCountours = getContours(hsvPurple, hsvPurpleOutputContours);
 
             // Threshold the HSV image to get only blue colors
             let hsvBlue = getBlueMask(hsv);
             cv.imshow('hsvBlueOutput', hsvBlue);
+            let blueCountours = getContours(hsvBlue, hsvBlueOutputContours);
 
             // Threshold the HSV image to get only green colors
             let hsvGreen = getGreenMask(hsv);
             cv.imshow('hsvGreenOutput', hsvGreen);
+            let greenCountours = getContours(hsvGreen, hsvGreenOutputContours);
 
             // Mask opening
             let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
@@ -283,6 +334,7 @@
             hsvPurple.delete();
             hsvBlue.delete();
             hsvGreen.delete();
+            grid.delete();
 
             var endTime = performance.now();
             var timeTaken = endTime - startTime;
