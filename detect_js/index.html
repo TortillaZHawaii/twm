@@ -152,8 +152,7 @@
             templateRoi.x += x;
             templateRoi.y += y;
 
-            let grid = dst.roi(templateRoi);
-            cv.imshow('gridOnly', grid);
+            let grid = dst.roi(templateRoi).clone();
 
             // Can't use cv.addWeighted because the template has an alpha channel
             for (let i = 0; i < templateRescaled.rows; i++) {
@@ -235,7 +234,7 @@
             let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.497, 255, 255, 0]);
             cv.inRange(hsv, low, high, hsvGreen);
             return hsvGreen;
-        }     
+        }
 
         function getContours(hsv, imgSrcName) {
             // Function to get contours for given hsv and draw them
@@ -243,14 +242,14 @@
             let hierarchy = new cv.Mat();
 
             cv.findContours(hsv, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-            
+
             let dst = cv.Mat.zeros(hsv.rows, hsv.cols, cv.CV_8UC3);
 
             for (let i = 0; i < contours.size(); ++i) {
                 let color = new cv.Scalar(255, 255, 255);
                 cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
             }
-            
+
             cv.imshow(imgSrcName, dst);
             dst.delete();
 
@@ -268,6 +267,7 @@
             let copy = src.clone();
             let grid = drawTemplateOn(copy);
             cv.imshow('withTemplate', copy);
+            cv.imshow('gridOnly', grid);
             copy.delete();
 
             // Convert image to HSV
