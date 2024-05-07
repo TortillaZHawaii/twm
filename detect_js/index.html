@@ -9,7 +9,7 @@
         .inputoutput canvas {
             max-width: 100%;
             /* Makes image and canvas not exceed the width of their container */
-            max-height: 400px;
+            max-height: 40em;
             /* Adjust this value based on your page layout */
             display: block;
             /* Ensures max-width and max-height are respected */
@@ -46,6 +46,7 @@
             <canvas id="gridOnly"></canvas>
             <div class="caption">gridOnly</div>
         </div>
+        <table id="outputTable"></table>
         <div class="inputoutput">
             <canvas id="hsvOutput"></canvas>
             <div class="caption">hsvOutput</div>
@@ -256,6 +257,68 @@
             return contours;
         }
 
+        function detectDices(color, colorMaskFunction, hsv, imgSrcName, gridArray) {
+            let colorMask = colorMaskFunction(hsv);
+            let contours = getContours(colorMask, imgSrcName);
+
+            function getApproximatedDiceSideLength(hsv) {
+                return hsv.rows / 4;
+            }
+
+            function getApproximatedCircleRadius(diceLength) {
+                return diceLength / 4 / 2;
+            }
+
+            let diceSideLength = getApproximatedDiceSideLength(hsv);
+            let circleRadius = getApproximatedCircleRadius(diceSideLength);
+
+            let diceAreaLowerBound = diceSideLength * diceSideLength / 2;
+            let circleArea = circleRadius * circleRadius * Math.PI;
+            let circleAreaLowerBound = 0.4 * circleArea;
+            let circleAreaUpperBound = 1.4 * circleArea;
+            let noiseArea = 0.1 * circleArea;
+
+
+            for (let i = 0; i < contours.size(); ++i) {
+                let contour = contours.get(i);
+                let area = cv.contourArea(contour, false);
+
+                let isNoise = area < noiseArea;
+
+                if (isNoise) {
+                    continue;
+                }
+
+                let perimeter = cv.arcLength(contour, true);
+                let circularity = 4 * Math.PI * area / (perimeter * perimeter);
+                let centroid = cv.moments(contour, false);
+                let x = centroid.m10 / centroid.m00;
+                let y = centroid.m01 / centroid.m00;
+
+                let gridX = Math.floor(x / diceSideLength);
+                let gridY = Math.floor(y / diceSideLength);
+
+                // if area is close to dice area, it's a dice
+                let isSquare = area > diceAreaLowerBound;
+                // if area is close to circle area, it's a circle
+                let isCircle = area > circleAreaLowerBound && area < circleAreaUpperBound;
+
+                console.log('gridX: ' + gridX + ', gridY: ' + gridY + ',\n circularity: ' + circularity + ', area ' + area + ',\n isSquare: ' + isSquare + ', isCircle: ' + isCircle);
+
+                if (isSquare) {
+                    gridArray[gridY][gridX].color = color;
+                } else if (isCircle) {
+                    if (gridArray[gridY][gridX].value === undefined) {
+                        gridArray[gridY][gridX].value = 1;
+                    } else {
+                        gridArray[gridY][gridX].value += 1;
+                    }
+                }
+            }
+
+            return gridArray;
+        }
+
         function runDiceDetection() {
             var startTime = performance.now();
 
@@ -280,30 +343,63 @@
             cv.imshow('hsvBlackOutput', hsvBlack);
             let blackCountours = getContours(hsvBlack, hsvBlackOutputContours);
 
+            let cols = 5;
+            let rows = 4;
+            let gridArray = Array.from(Array(rows), () => Array(cols).fill().map(Object));
+            for (let i = 0; i < gridArray.length; i++) {
+                for (let j = 0; j < gridArray[i].length; j++) {
+                    console.log('gridArray[' + i + '][' + j + ']: ' + JSON.stringify(gridArray[i][j]));
+                }
+            }
+
             // Threshold the HSV image to get only yellow colors
             let hsvYellow = getYellowMask(hsv);
             cv.imshow('hsvYellowOutput', hsvYellow);
             let yellowCountours = getContours(hsvYellow, hsvYellowOutputContours);
 
+            // Detect dices
+            gridArray = detectDices('yellow', getYellowMask, hsv, hsvYellowOutputContours, gridArray);
+
+            for (let i = 0; i < gridArray.length; i++) {
+                for (let j = 0; j < gridArray[i].length; j++) {
+                    console.log('gridArray[' + i + '][' + j + ']: ' + JSON.stringify(gridArray[i][j]));
+                }
+            }
+
             // Threshold the HSV image to get only red colors
             let hsvRed = getRedMask(hsv);
             cv.imshow('hsvRedOutput', hsvRed);
             let redCountours = getContours(hsvRed, hsvRedOutputContours);
+            gridArray = detectDices('red', getRedMask, hsv, hsvRedOutputContours, gridArray);
 
             // Threshold the HSV image to get only purple colors
             let hsvPurple = getPurpleMask(hsv);
             cv.imshow('hsvPurpleOutput', hsvPurple);
             let purpleCountours = getContours(hsvPurple, hsvPurpleOutputContours);
+            gridArray = detectDices('purple', getPurpleMask, hsv, hsvRedOutputContours, gridArray);
 
             // Threshold the HSV image to get only blue colors
             let hsvBlue = getBlueMask(hsv);
             cv.imshow('hsvBlueOutput', hsvBlue);
             let blueCountours = getContours(hsvBlue, hsvBlueOutputContours);
+            gridArray = detectDices('blue', getBlueMask, hsv, hsvBlueOutputContours, gridArray);
 
             // Threshold the HSV image to get only green colors
             let hsvGreen = getGreenMask(hsv);
             cv.imshow('hsvGreenOutput', hsvGreen);
             let greenCountours = getContours(hsvGreen, hsvGreenOutputContours);
+            gridArray = detectDices('green', getGreenMask, hsv, hsvGreenOutputContours, gridArray);
+
+            // write the output to the table
+            let table = document.getElementById('outputTable');
+            table.innerHTML = '';
+            for (let i = 0; i < gridArray.length; i++) {
+                let row = table.insertRow();
+                for (let j = 0; j < gridArray[i].length; j++) {
+                    let cell = row.insertCell();
+                    cell.innerHTML = JSON.stringify(gridArray[i][j]);
+                }
+            }
 
             // Mask opening
             let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
