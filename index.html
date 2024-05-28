@@ -19,6 +19,7 @@
     </style>
     <script src="./engine/opencv.js" type="text/javascript"></script>
     <script src="./engine/templater.js" type="text/javascript"></script>
+    <script src="./engine/color_masks.js" type="text/javascript"></script>
 </head>
 
 <body>
@@ -110,70 +111,6 @@
         </div>
     </div>
     <script type="text/javascript">
-        function getBlackMask(hsv) {
-            // Threshold the HSV image to get only black colors 
-            let hsvBlack = new cv.Mat();
-            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [0, 0, 0, 0]);
-            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180, 255, 50, 0]);
-            cv.inRange(hsv, low, high, hsvBlack);
-            return hsvBlack;
-        }
-
-        function getYellowMask(hsv) {
-            // Threshold the HSV image to get only yellow colors 
-            let hsvYellow = new cv.Mat();
-            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.085, 255 * 0.220, 255 * 0.204, 0]);
-            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.247, 255, 255, 0]);
-            cv.inRange(hsv, low, high, hsvYellow);
-            return hsvYellow;
-        }
-
-        function getRedMask(hsv) {
-            // Threshold the HSV image to get only red colors 
-            let hsvRed = new cv.Mat();
-            // Hue range for red is 0-15 and 165-180, since red is wrap around
-            let low1 = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.914, 255 * 0.220, 255 * 0.204, 0]);
-            let high1 = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180, 255, 255, 0]);
-            cv.inRange(hsv, low1, high1, hsvRed);
-
-            let mat2 = new cv.Mat();
-            let low2 = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [0, 255 * 0.220, 255 * 0.204, 0]);
-            let high2 = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.075, 255, 255, 0]);
-            cv.inRange(hsv, low2, high2, mat2);
-
-            cv.bitwise_or(hsvRed, mat2, hsvRed);
-            mat2.delete();
-
-            return hsvRed;
-        }
-
-        function getPurpleMask(hsv) {
-            // Threshold the HSV image to get only purple colors 
-            let hsvPurple = new cv.Mat();
-            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.711, 255 * 0.171, 255 * 0.123, 0]);
-            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.902, 255, 255, 0]);
-            cv.inRange(hsv, low, high, hsvPurple);
-            return hsvPurple;
-        }
-
-        function getBlueMask(hsv) {
-            // Threshold the HSV image to get only blue colors 
-            let hsvBlue = new cv.Mat();
-            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.527, 255 * 0.327, 255 * 0.236, 0]);
-            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.684, 255, 255, 0]);
-            cv.inRange(hsv, low, high, hsvBlue);
-            return hsvBlue;
-        }
-
-        function getGreenMask(hsv) {
-            // Threshold the HSV image to get only green colors 
-            let hsvGreen = new cv.Mat();
-            let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.354, 255 * 0.109, 255 * 0.07, 0]);
-            let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180 * 0.497, 255, 255, 0]);
-            cv.inRange(hsv, low, high, hsvGreen);
-            return hsvGreen;
-        }
-
         function getContours(hsv, imgSrcName) {
             // Function to get contours for given hsv and draw them
             let contours = new cv.MatVector();
@@ -280,7 +217,7 @@
             cv.imshow('hsvOutput', hsv);
 
             // Threshold the HSV image to get only black colors 
-            let hsvBlack = getBlackMask(hsv);
+            let hsvBlack = ColorMasks.getBlack(hsv);
             cv.imshow('hsvBlackOutput', hsvBlack);
             let blackCountours = getContours(hsvBlack, hsvBlackOutputContours);
 
@@ -294,12 +231,12 @@
             }
 
             // Threshold the HSV image to get only yellow colors
-            let hsvYellow = getYellowMask(hsv);
+            let hsvYellow = ColorMasks.getYellow(hsv);
             cv.imshow('hsvYellowOutput', hsvYellow);
             let yellowCountours = getContours(hsvYellow, hsvYellowOutputContours);
 
             // Detect dices
-            gridArray = detectDices('yellow', getYellowMask, hsv, hsvYellowOutputContours, gridArray);
+            gridArray = detectDices('yellow', ColorMasks.getYellow, hsv, hsvYellowOutputContours, gridArray);
 
             for (let i = 0; i < gridArray.length; i++) {
                 for (let j = 0; j < gridArray[i].length; j++) {
@@ -308,28 +245,28 @@
             }
 
             // Threshold the HSV image to get only red colors
-            let hsvRed = getRedMask(hsv);
+            let hsvRed = ColorMasks.getRed(hsv);
             cv.imshow('hsvRedOutput', hsvRed);
             let redCountours = getContours(hsvRed, hsvRedOutputContours);
-            gridArray = detectDices('red', getRedMask, hsv, hsvRedOutputContours, gridArray);
+            gridArray = detectDices('red', ColorMasks.getRed, hsv, hsvRedOutputContours, gridArray);
 
             // Threshold the HSV image to get only purple colors
-            let hsvPurple = getPurpleMask(hsv);
+            let hsvPurple = ColorMasks.getPurple(hsv);
             cv.imshow('hsvPurpleOutput', hsvPurple);
             let purpleCountours = getContours(hsvPurple, hsvPurpleOutputContours);
-            gridArray = detectDices('purple', getPurpleMask, hsv, hsvRedOutputContours, gridArray);
+            gridArray = detectDices('purple', ColorMasks.getPurple, hsv, hsvRedOutputContours, gridArray);
 
             // Threshold the HSV image to get only blue colors
-            let hsvBlue = getBlueMask(hsv);
+            let hsvBlue = ColorMasks.getBlue(hsv);
             cv.imshow('hsvBlueOutput', hsvBlue);
             let blueCountours = getContours(hsvBlue, hsvBlueOutputContours);
-            gridArray = detectDices('blue', getBlueMask, hsv, hsvBlueOutputContours, gridArray);
+            gridArray = detectDices('blue', ColorMasks.getBlue, hsv, hsvBlueOutputContours, gridArray);
 
             // Threshold the HSV image to get only green colors
-            let hsvGreen = getGreenMask(hsv);
+            let hsvGreen = ColorMasks.getGreen(hsv);
             cv.imshow('hsvGreenOutput', hsvGreen);
             let greenCountours = getContours(hsvGreen, hsvGreenOutputContours);
-            gridArray = detectDices('green', getGreenMask, hsv, hsvGreenOutputContours, gridArray);
+            gridArray = detectDices('green', ColorMasks.getGreen, hsv, hsvGreenOutputContours, gridArray);
 
             // write the output to the table
             let table = document.getElementById('outputTable');
