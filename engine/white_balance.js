@@ -21,6 +21,10 @@ class WhiteBalancer {
         return {kr, kg, kb};
     }
 
+    static cropToUint8(pixel) {
+        return Math.max(0, Math.min(255, pixel));
+    }
+
     static balance(image, grayPixels) {
         let {kr, kg, kb} = this._getAverageGray(grayPixels);
 
@@ -31,9 +35,9 @@ class WhiteBalancer {
         for (let i = 0; i < result.rows; i++) {
             for (let j = 0; j < result.cols; j++) {
                 let pixel = result.ucharPtr(i, j);
-                pixel[0] *= kr;
-                pixel[1] *= kg;
-                pixel[2] *= kb;
+                pixel[0] = this.cropToUint8(pixel[0] * kr);
+                pixel[1] = this.cropToUint8(pixel[1] * kg);
+                pixel[2] = this.cropToUint8(pixel[2] * kb);
             }
         }
         

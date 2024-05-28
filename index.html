@@ -117,21 +117,33 @@
         </div>
     </div>
     <script type="text/javascript">
-        function getContours(hsv, imgSrcName) {
+        function getContours(hsv, contoursSrcName = null) {
             // Function to get contours for given hsv and draw them
             let contours = new cv.MatVector();
             let hierarchy = new cv.Mat();
 
-            cv.findContours(hsv, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+            // let kernel = cv.Mat.ones(5, 5, cv.CV_8UC3);
+            // let anchor = new cv.Point(-1, -1);
+            // let iterations = 5;
+            // cv.morphologyEx(hsv, hsv, cv.MORPH_OPEN, kernel, anchor, iterations);
+            let M = cv.Mat.ones(50, 50, cv.CV_8U);
+            let anchor = new cv.Point(1, 1);
+            let fat = new cv.Mat();
+            cv.dilate(hsv, fat, M, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
 
-            let dst = cv.Mat.zeros(hsv.rows, hsv.cols, cv.CV_8UC3);
+            cv.findContours(fat, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+
+            if (contoursSrcName === null) {
+                return contours;
+            }
 
             for (let i = 0; i < contours.size(); ++i) {
                 let color = new cv.Scalar(255, 255, 255);
                 cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
             }
 
-            cv.imshow(imgSrcName, dst);
+            let dst = cv.Mat.zeros(hsv.rows, hsv.cols, cv.CV_8UC3);
+            cv.imshow(contoursSrcName, dst); //dst);
             dst.delete();
 
             return contours;
