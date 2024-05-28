@@ -5,6 +5,9 @@ class Templater {
     constructor(template) {
         // this would be better to load from a file but unsure how to do that
         this.template = template;
+        // hardcoded, since the loaded template can be resized
+        this.rowsFromPng = 1280;
+        this.colsFromPng = 565;
         this.padding = 0.1;
     }
 
@@ -22,21 +25,33 @@ class Templater {
         let right = 530;
         let bottom = 1245;
 
-        // also hardcoded, since the loaded template can be resized
-        let rowsFromPng = 1280;
-        let colsFromPng = 565;
-
-        let scaleCols = template.cols / colsFromPng * scale;
-        let scaleRows = template.rows / rowsFromPng * scale;
+        let scaleCols = template.cols / this.colsFromPng * scale;
+        let scaleRows = template.rows / this.rowsFromPng * scale;
 
         return new cv.Rect(left * scaleCols, top * scaleRows, (right - left) * scaleCols, (bottom - top) * scaleRows);
     }
+
+    _getGrayPixelCoordinates(template, scale) {
+        let height = 660;
+        let distanceFromEdge = 55;
+        let pointsOnTemplate = [
+            {y: height, x: distanceFromEdge},
+            {y: height, x: this.colsFromPng - distanceFromEdge},
+        ];
+
+        let scaleCols = template.cols / this.colsFromPng * scale;
+        let scaleRows = template.rows / this.rowsFromPng * scale;
+
+        return pointsOnTemplate.map(({y, x}) => new cv.Point(x * scaleCols, y * scaleRows));
+    }
+
 
     // returns a new cv.Mat based on image with the template applied in the middle
     // image: cv.Mat
     render(image) {
         let scale = this._getScale(this.template, image);
         let roi = this._getTemplateGridRoi(this.template, scale);
+        let grayPixelCoords = this._getGrayPixelCoordinates(this.template, scale);
 
         // resize the template to fit in the image
         let resizedTemplate = new cv.Mat();
@@ -71,9 +86,13 @@ class Templater {
         roi.x += startX;
         roi.y += startY;
 
+        // move the points to be in image coordinates
+        grayPixelCoords = grayPixelCoords.map(({x, y}) => new cv.Point(x + startX, y + startY));
+
         return {
             imageWithTemplate: result,
-            gridRoi: roi
+            gridRoi: roi,
+            grayPixelCoords: grayPixelCoords,
         };
     }
 }

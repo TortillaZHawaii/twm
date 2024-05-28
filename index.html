@@ -45,6 +45,10 @@
             <div class="caption">withTemplate</div>
         </div>
         <div class="inputoutput">
+            <canvas id="grayPoints"></canvas>
+            <div class="caption">Two points captured for white balance.</div>
+        </div>
+        <div class="inputoutput">
             <canvas id="gridOnly"></canvas>
             <div class="caption">gridOnly</div>
         </div>
@@ -201,7 +205,16 @@
             let template = cv.imread('templateImage');
             let templater = new Templater(template);
             let result = templater.render(src);
+
             cv.imshow('withTemplate', result.imageWithTemplate);
+            // draw dots on gray points to check if they are aligned
+            for (let i = 0; i < result.grayPixelCoords.length; i++) {
+                let point = result.grayPixelCoords[i];
+                console.log('gray point: ' + JSON.stringify(point));
+                cv.circle(result.imageWithTemplate, point, 1, new cv.Scalar(0, 0, 255), -1);
+            }
+            cv.imshow('grayPoints', result.imageWithTemplate);
+
             result.imageWithTemplate.delete();
 
             // Get the grid based on t
