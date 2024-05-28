@@ -48,59 +48,56 @@
             <canvas id="gridOnly"></canvas>
             <div class="caption">gridOnly</div>
         </div>
+        <h3>Analyze the grid</h3>
+        <p>Convert the grid to hsv to make it easier for thresholding.</p>
         <table id="outputTable"></table>
         <div class="inputoutput">
             <canvas id="hsvOutput"></canvas>
             <div class="caption">hsvOutput</div>
         </div>
+        <h4>Black</h4>
         <div class="inputoutput">
             <canvas id="hsvBlackOutput"></canvas>
-            <div class="caption">hsvBlackOutput</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvBlackOutputContours"></canvas>
-            <div class="caption">hsvBlackOutputContours</div>
         </div>
+        <h4>Yellow</h4>
         <div class="inputoutput">
             <canvas id="hsvYellowOutput"></canvas>
-            <div class="caption">hsvYellowOutput</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvYellowOutputContours"></canvas>
-            <div class="caption">hsvYellowOutputContours</div>
         </div>
+        <h4>Red</h4>
         <div class="inputoutput">
             <canvas id="hsvRedOutput"></canvas>
-            <div class="caption">hsvRedOutput</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvRedOutputContours"></canvas>
-            <div class="caption">hsvRedOutputContours</div>
         </div>
+        <h4>Purple</h4>
         <div class="inputoutput">
             <canvas id="hsvPurpleOutput"></canvas>
-            <div class="caption">hsvPurpleOutput</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvPurpleOutputContours"></canvas>
-            <div class="caption">hsvPurpleOutputContours</div>
         </div>
+        <h4>Blue</h4>
         <div class="inputoutput">
             <canvas id="hsvBlueOutput"></canvas>
-            <div class="caption">hsvBlueOutput</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvBlueOutputContours"></canvas>
-            <div class="caption">hsvBlueOutputContours</div>
         </div>
+        <h4>Green</h4>
         <div class="inputoutput">
             <canvas id="hsvGreenOutput"></canvas>
-            <div class="caption">hsvGreenOutput</div>
         </div>
         <div class="inputoutput">
             <canvas id="hsvGreenOutputContours"></canvas>
-            <div class="caption">hsvGreenOutputContours</div>
         </div>
+        <h3>Opening and closing</h3>
         <div class="inputoutput">
             <canvas id="hsvBlackOpened"></canvas>
             <div class="caption">hsvBlackOpened</div>
@@ -254,7 +251,7 @@
             let hsvPurple = ColorMasks.getPurple(hsv);
             cv.imshow('hsvPurpleOutput', hsvPurple);
             let purpleCountours = getContours(hsvPurple, hsvPurpleOutputContours);
-            gridArray = detectDices('purple', ColorMasks.getPurple, hsv, hsvRedOutputContours, gridArray);
+            gridArray = detectDices('purple', ColorMasks.getPurple, hsv, hsvPurpleOutputContours, gridArray);
 
             // Threshold the HSV image to get only blue colors
             let hsvBlue = ColorMasks.getBlue(hsv);
