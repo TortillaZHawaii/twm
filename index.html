@@ -20,6 +20,7 @@
     <script src="./engine/opencv.js" type="text/javascript"></script>
     <script src="./engine/templater.js" type="text/javascript"></script>
     <script src="./engine/color_masks.js" type="text/javascript"></script>
+    <script src="./engine/white_balance.js" type="text/javascript"></script>
 </head>
 
 <body>
@@ -30,27 +31,31 @@
         <p id="timeTaken"></p>
         <div class="inputoutput">
             <img id="imageSrc" alt="No Image" src="./examples/far_full.jpg" />
-            <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
+            <div class="caption">Source image for analysis. <input type="file" id="fileInput" name="file" /></div>
         </div>
+
         <div class="inputoutput">
             <img id="templateImage" alt="template" src="./resources/template.png"></canvas>
-            <div class="caption">template</div>
+            <div class="caption">Template image.</div>
         </div>
-        <div class="inputoutput">
-            <canvas id="templateRescaled"></canvas>
-            <div class="caption">templateRescaled</div>
-        </div>
+
         <div class="inputoutput">
             <canvas id="withTemplate"></canvas>
-            <div class="caption">withTemplate</div>
+            <div class="caption">Source image with template drawn on it.</div>
         </div>
+
+
         <div class="inputoutput">
             <canvas id="grayPoints"></canvas>
             <div class="caption">Two points captured for white balance.</div>
         </div>
         <div class="inputoutput">
             <canvas id="gridOnly"></canvas>
-            <div class="caption">gridOnly</div>
+            <div class="caption">Grid image cut from the source.</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="gridWhiteBalanced"></canvas>
+            <div class="caption">Grid image cut after white balancing based on two points.</div>
         </div>
         <h3>Analyze the grid</h3>
         <p>Convert the grid to hsv to make it easier for thresholding.</p>
@@ -217,9 +222,17 @@
 
             result.imageWithTemplate.delete();
 
-            // Get the grid based on t
+            // Get the grid based on template roi
             let grid = src.roi(result.gridRoi);
             cv.imshow('gridOnly', grid);
+
+            let grayPixels = WhiteBalancer.getGrayPixels(src, result.grayPixelCoords);
+            let gridWhiteBalanced = WhiteBalancer.balance(grid, grayPixels);
+            cv.imshow('gridWhiteBalanced', gridWhiteBalanced);
+
+            // use the white balanced grid for further processing
+            grid.delete();
+            grid = gridWhiteBalanced;
 
             // Convert image to HSV
             let hsv = cv.Mat.zeros(grid.rows, grid.cols, cv.CV_8UC3);
