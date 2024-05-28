@@ -79,6 +79,7 @@ class ColorMasks {
     }
 
     // meta layer that combines masks of dice colors: yellow, red, purple, blue, green
+    // it basically does not include black and white
     static getAllColors(hsv) {
         let hsvMeta = new cv.Mat();
         let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [0, 255 * 0.367, 255 * 0.123, 0]);
@@ -87,5 +88,27 @@ class ColorMasks {
         low.delete();
         high.delete();
         return hsvMeta;
+    }
+
+    // first find all the dices and get their colors by averaging the colors of the dice (contours)
+    static getWithoutBlack(hsv) {
+        let hsvMeta = new cv.Mat();
+        let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [0, 0, 0.151 * 255, 0]);
+        let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180, 255, 255, 0]);
+        cv.inRange(hsv, low, high, hsvMeta);
+        low.delete();
+        high.delete();
+        return hsvMeta;
+    }
+
+    // second calculate all the white contours
+    static getWhite(hsv) {
+        let hsvWhite = new cv.Mat();
+        let low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [0, 0, 0.706 * 255, 0]);
+        let high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [180, 0.403 * 255, 255, 0]);
+        cv.inRange(hsv, low, high, hsvWhite);
+        low.delete();
+        high.delete();
+        return hsvWhite;
     }
 }
