@@ -6,4 +6,4 @@ const DiceColor = Object.freeze({
     Purple: 'Purple'
 });
 
-module.exports = DiceColor;
+export default DiceColor;

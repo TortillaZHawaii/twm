@@ -1,8 +1,8 @@
-import { DiceColor } from './dice_color.js';
+import DiceColor from './dice_color.js';
 
-class Dice {
+export default class Dice {
     constructor(color, value) {
-        if (!(color instanceof DiceColor)) {
+        if (!Object.values(DiceColor).includes(color)) {
             throw new Error('color must be an instance of DiceColor');
         }
         this.color = color;
@@ -34,5 +34,3 @@ class Dice {
         this.color = colors[previousIndex];
     }
 }
-
-module.exports = Dice;
