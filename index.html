@@ -9,63 +9,66 @@
         .inputoutput canvas {
             max-width: 100%;
             /* Makes image and canvas not exceed the width of their container */
-            max-height: 40em;
+            /* max-height: 40em; */
             /* Adjust this value based on your page layout */
             display: block;
             /* Ensures max-width and max-height are respected */
             margin: 0 auto;
             /* Centers the image/canvas if it's smaller than the max width */
         }
-    #video {
-        border: 2px solid black;
-        width: 640px;
-        height: 480px;
-        position: relative;
-        z-index: 1;
-        display: block;
-        margin: 0 auto;
-    }
-    #template {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        max-width: 100%;
-        max-height: 100%;
-        z-index: 2;
-        pointer-events: none;
-    }
-    #canvas {
-        display: none;
-    }
-    .camera {
-        display: inline-block;
-        position: relative;
-    }
-    .output {
-        width: 340px;
-        padding-top: 20px;
-        display: inline-block;
-    }
-    #startbutton {
-        display: block;
-        position: relative;
-        margin-left: auto;
-        margin-right: auto;
-        bottom: -5px;
-        padding: 15px;
-        background-color: #8481da;
-        border: 1px solid rgba(0, 0, 0, 0.7);
-        font-size: 14px;
-        color: rgba(255, 255, 255, 1.0);
-        cursor: pointer;
-    }
-    .contentarea {
-        font-size: 16px;
-        font-family: Arial;
-        text-align: center;
-    }
 
+        #video {
+            border: 2px solid black;
+            max-width: 100%;
+            position: relative;
+            z-index: 1;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #template {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 100%;
+            max-height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .camera {
+            display: inline-block;
+            position: relative;
+        }
+
+        .output {
+            padding-top: 20px;
+            display: inline-block;
+        }
+
+        #startbutton {
+            display: block;
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 15px;
+            background-color: #8481da;
+            border: 1px solid rgba(0, 0, 0, 0.7);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 1.0);
+            cursor: pointer;
+        }
+
+        .contentarea {
+            font-size: 16px;
+            font-family: Arial;
+            text-align: center;
+        }
     </style>
     <script src="./engine/opencv.js" type="text/javascript"></script>
 
@@ -73,10 +76,12 @@
     <script type="module" src="./entities/dice_board.js" type="text/javascript"></script>
     <script type="module" src="./entities/dice_color.js" type="text/javascript"></script>
 
-    <script src="./engine/templater.js" type="text/javascript"></script>
-    <script src="./engine/color_masks.js" type="text/javascript"></script>
-    <script src="./engine/white_balance.js" type="text/javascript"></script>
+    <script type="module" src="./engine/templater.js" type="text/javascript"></script>
+    <script type="module" src="./engine/color_masks.js" type="text/javascript"></script>
+    <script type="module" src="./engine/white_balance.js" type="text/javascript"></script>
     <script type="module" src="./engine/dice_grid_detector.js" type="text/javascript"></script>
+
+    <script type="module" src="./main.js" type="text/javascript"></script>
 </head>
 
 <body>
@@ -84,19 +89,26 @@
     <p id="status">OpenCV.js is loading...</p>
     <button id="runDiceDetectionBtn">Run Dice Detection</button>
     <div>
-        <p id=" timeTaken"></p>
+        <p id="timeTaken"></p>
         <div class="inputoutput">
             <img id="imageSrc" alt="No Image" src="./examples/far_full.jpg" />
             <div class="caption">Source image for analysis. <input type="file" id="fileInput" name="file" /></div>
         </div>
 
         <div class="contentarea">
+            <canvas id="videocanvas" class="d-none"></canvas>
             <div class="camera">
                 <video id="video">Video stream not available.</video>
                 <img id="template" src="./resources/template.png" alt="Template Overlay">
             </div>
-            <div><button id="startbutton">Take photo</button></div>
-            <canvas id="canvas"></canvas>
+            <div>
+                <button id="startbutton">Take photo</button>
+            </div>
+            <div class="video-options">
+                <select name="" id="videoptionsselect" class="custom-select">
+                    <option value="">Select camera</option>
+                </select>
+            </div>
         </div>
 
         <div class="inputoutput">
@@ -180,347 +192,97 @@
             <div class="caption">canvasOutput</div>
         </div>
     </div>
-    <script type="module" type="text/javascript">
-        import DiceGridDetectorV2 from './engine/dice_grid_detector.js';
-
-        function getContours(hsv, contoursSrcName = null) {
-            // Function to get contours for given hsv and draw them
-            let contours = new cv.MatVector();
-            let hierarchy = new cv.Mat();
-
-            // let kernel = cv.Mat.ones(5, 5, cv.CV_8UC3);
-            // let anchor = new cv.Point(-1, -1);
-            // let iterations = 5;
-            // cv.morphologyEx(hsv, hsv, cv.MORPH_OPEN, kernel, anchor, iterations);
-            let M = cv.Mat.ones(3, 3, cv.CV_8U);
-            let N = cv.Mat.ones(2, 2, cv.CV_8U);
-            let anchor = new cv.Point(-1, -1);
-            let fat = new cv.Mat();
-            cv.morphologyEx(hsv, fat, cv.MORPH_OPEN, N, anchor, 3, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
-            cv.dilate(fat, fat, N, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
-
-            cv.findContours(fat, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-
-            if (contoursSrcName === null) {
-                return contours;
-            }
-
-            let dst = cv.Mat.zeros(hsv.rows, hsv.cols, cv.CV_8UC3);
-
-            for (let i = 0; i < contours.size(); ++i) {
-                let color = new cv.Scalar(255, 255, 255);
-                cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
-            }
-
-            console.log('contoursSrcName: ' + contoursSrcName);
-            cv.imshow(contoursSrcName, fat); //dst);
-            dst.delete();
-
-            return contours;
-        }
-
-        function detectDices(color, colorMaskFunction, hsv, imgSrcName, gridArray) {
-            let colorMask = colorMaskFunction(hsv);
-            let contours = getContours(colorMask, imgSrcName);
-
-            function getApproximatedDiceSideLength(hsv) {
-                return hsv.rows / 4;
-            }
-
-            function getApproximatedCircleRadius(diceLength) {
-                return diceLength / 4 / 2;
-            }
-
-            let diceSideLength = getApproximatedDiceSideLength(hsv);
-            let circleRadius = getApproximatedCircleRadius(diceSideLength);
-
-            let diceAreaLowerBound = diceSideLength * diceSideLength / 2;
-            let circleArea = circleRadius * circleRadius * Math.PI;
-            let circleAreaLowerBound = 0.4 * circleArea;
-            let circleAreaUpperBound = 1.4 * circleArea;
-            let noiseArea = 0.1 * circleArea;
-
-
-            for (let i = 0; i < contours.size(); ++i) {
-                let contour = contours.get(i);
-                let area = cv.contourArea(contour, false);
-
-                let isNoise = area < noiseArea;
-
-                if (isNoise) {
-                    continue;
-                }
-
-                let perimeter = cv.arcLength(contour, true);
-                let circularity = 4 * Math.PI * area / (perimeter * perimeter);
-                let centroid = cv.moments(contour, false);
-                let x = centroid.m10 / centroid.m00;
-                let y = centroid.m01 / centroid.m00;
-
-                let gridX = Math.floor(x / diceSideLength);
-                let gridY = Math.floor(y / diceSideLength);
-
-                // if area is close to dice area, it's a dice
-                let isSquare = area > diceAreaLowerBound;
-                // if area is close to circle area, it's a circle
-                let isCircle = area > circleAreaLowerBound && area < circleAreaUpperBound;
-
-                console.log('gridX: ' + gridX + ', gridY: ' + gridY + ',\n circularity: ' + circularity + ', area ' + area + ',\n isSquare: ' + isSquare + ', isCircle: ' + isCircle);
-
-                if (isSquare) {
-                    gridArray[gridY][gridX].color = color;
-                } else if (isCircle) {
-                    if (gridArray[gridY][gridX].value === undefined) {
-                        gridArray[gridY][gridX].value = 1;
-                    } else {
-                        gridArray[gridY][gridX].value += 1;
-                    }
-                }
-            }
-
-            return gridArray;
-        }
-
-        function runDiceDetection() {
-            var startTime = performance.now();
-
-            let src = cv.imread('imageSrc');
-            // Find edges using Hough Transform
-            let dst = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
-
-            // Draw the template on the src copy
-            let template = cv.imread('templateImage');
-            let templater = new Templater(template);
-            let result = templater.render(src);
-
-            cv.imshow('withTemplate', result.imageWithTemplate);
-            // draw dots on gray points to check if they are aligned
-            for (let i = 0; i < result.grayPixelCoords.length; i++) {
-                let point = result.grayPixelCoords[i];
-                console.log('gray point: ' + JSON.stringify(point));
-                cv.circle(result.imageWithTemplate, point, 1, new cv.Scalar(0, 0, 255), -1);
-            }
-            cv.imshow('grayPoints', result.imageWithTemplate);
-
-            result.imageWithTemplate.delete();
-
-            // Get the grid based on template roi
-            let grid = src.roi(result.gridRoi);
-            cv.imshow('gridOnly', grid);
-
-            let grayPixels = WhiteBalancer.getGrayPixels(src, result.grayPixelCoords);
-            let gridWhiteBalanced = WhiteBalancer.balance(grid, grayPixels);
-            cv.imshow('gridWhiteBalanced', gridWhiteBalanced);
-
-            // use the white balanced grid for further processing
-            grid.delete();
-            grid = gridWhiteBalanced;
-
-            // V2 Detection
-            let detectedV2 = DiceGridDetectorV2.detect(grid);
-            console.log('detectedV2: ' + JSON.stringify(detectedV2));
-
-            // Convert image to HSV
-            let hsv = cv.Mat.zeros(grid.rows, grid.cols, cv.CV_8UC3);
-            cv.cvtColor(grid, hsv, cv.COLOR_RGB2HSV, 0);
-            cv.imshow('hsvOutput', hsv);
-
-            // Threshold the HSV image to get only black colors 
-            let hsvBlack = ColorMasks.getBlack(hsv);
-            cv.imshow('hsvBlackOutput', hsvBlack);
-            let blackCountours = getContours(hsvBlack, hsvBlackOutputContours);
-
-            let cols = 5;
-            let rows = 4;
-            let gridArray = Array.from(Array(rows), () => Array(cols).fill().map(Object));
-            for (let i = 0; i < gridArray.length; i++) {
-                for (let j = 0; j < gridArray[i].length; j++) {
-                    console.log('gridArray[' + i + '][' + j + ']: ' + JSON.stringify(gridArray[i][j]));
-                }
-            }
-
-            // Threshold the HSV image to get only yellow colors
-            let hsvYellow = ColorMasks.getYellow(hsv);
-            cv.imshow('hsvYellowOutput', hsvYellow);
-            let yellowCountours = getContours(hsvYellow, hsvYellowOutputContours);
-
-            // Detect dices
-            gridArray = detectDices('yellow', ColorMasks.getYellow, hsv, hsvYellowOutputContours, gridArray);
-
-            for (let i = 0; i < gridArray.length; i++) {
-                for (let j = 0; j < gridArray[i].length; j++) {
-                    console.log('gridArray[' + i + '][' + j + ']: ' + JSON.stringify(gridArray[i][j]));
-                }
-            }
-
-            // Threshold the HSV image to get only red colors
-            let hsvRed = ColorMasks.getRed(hsv);
-            cv.imshow('hsvRedOutput', hsvRed);
-            let redCountours = getContours(hsvRed, hsvRedOutputContours);
-            gridArray = detectDices('red', ColorMasks.getRed, hsv, hsvRedOutputContours, gridArray);
-
-            // Threshold the HSV image to get only purple colors
-            let hsvPurple = ColorMasks.getPurple(hsv);
-            cv.imshow('hsvPurpleOutput', hsvPurple);
-            let purpleCountours = getContours(hsvPurple, hsvPurpleOutputContours);
-            gridArray = detectDices('purple', ColorMasks.getPurple, hsv, hsvPurpleOutputContours, gridArray);
-
-            // Threshold the HSV image to get only blue colors
-            let hsvBlue = ColorMasks.getBlue(hsv);
-            cv.imshow('hsvBlueOutput', hsvBlue);
-            let blueCountours = getContours(hsvBlue, hsvBlueOutputContours);
-            gridArray = detectDices('blue', ColorMasks.getBlue, hsv, hsvBlueOutputContours, gridArray);
-
-            // Threshold the HSV image to get only green colors
-            let hsvGreen = ColorMasks.getGreen(hsv);
-            cv.imshow('hsvGreenOutput', hsvGreen);
-            let greenCountours = getContours(hsvGreen, hsvGreenOutputContours);
-            gridArray = detectDices('green', ColorMasks.getGreen, hsv, hsvGreenOutputContours, gridArray);
-
-            // write the output to the table
-            let table = document.getElementById('outputTable');
-            table.innerHTML = '';
-            for (let i = 0; i < gridArray.length; i++) {
-                let row = table.insertRow();
-                for (let j = 0; j < gridArray[i].length; j++) {
-                    let cell = row.insertCell();
-                    cell.innerHTML = JSON.stringify(gridArray[i][j]);
-                }
-            }
-
-            // Mask opening
-            let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-            let anchor = new cv.Point(-1, -1);
-            let iterations = 1;
-            let hsvBlackOpened = new cv.Mat();
-            cv.morphologyEx(hsvBlack, hsvBlackOpened, cv.MORPH_OPEN, kernel, anchor, iterations);
-            cv.imshow('hsvBlackOpened', hsvBlackOpened);
-
-            // let lines = new cv.Mat();
-            // let color = new cv.Scalar(255, 0, 0);
-            // // cv.cvtColor(hsv, src, cv.COLOR_RGBA2GRAY, 0);
-            // cv.Canny(hsvBlackOpened, hsvBlackOpened, 220, 250, 5);
-            // // You can try more different parameters
-            // cv.HoughLinesP(hsvBlackOpened, lines, 1, Math.PI / 180, 2, 0, 0);
-            // // draw lines
-            // for (let i = 0; i < lines.rows; ++i) {
-            //     let startPoint = new cv.Point(lines.data32S[i * 4], lines.data32S[i * 4 + 1]);
-            //     let endPoint = new cv.Point(lines.data32S[i * 4 + 2], lines.data32S[i * 4 + 3]);
-            //     cv.line(dst, startPoint, endPoint, color);
-            // }
-            // cv.imshow('canvasOutput', dst);
-            // Dispose the mats to free memory
-            src.delete(); hsv.delete(); hsvBlackOpened.delete();
-            hsvBlack.delete();
-            hsvYellow.delete();
-            hsvRed.delete();
-            hsvPurple.delete();
-            hsvBlue.delete();
-            hsvGreen.delete();
-            grid.delete();
-
-            var endTime = performance.now();
-            var timeTaken = endTime - startTime;
-            document.getElementById('timeTaken').innerHTML = 'Time taken: ' + timeTaken + 'ms';
-        }
-
-        let btnElement = document.getElementById('runDiceDetectionBtn');
-        btnElement.addEventListener('click', runDiceDetection);
-        let imgElement = document.getElementById('imageSrc');
-        let inputElement = document.getElementById('fileInput');
-        inputElement.addEventListener('change', (e) => {
-            imgElement.src = URL.createObjectURL(e.target.files[0]);
-        }, false);
-
-        var Module = {
-            // https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized
-            onRuntimeInitialized() {
-                document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
-                imgElement.onload = runDiceDetection;
-            }
-        };
-    </script>
     <script>
-        (function() {
-    
-            var width = 320;
-            var height = 0;
-    
-            var streaming = false;
-    
-            var video = null;
-            var canvas = null;
-            var photo = null;
-            var startbutton = null;
-    
-            function startup() {
-                video = document.getElementById('video');
-                canvas = document.getElementById('canvas');
-                photo = document.getElementById('imageSrc');
-                startbutton = document.getElementById('startbutton');
-    
-                navigator.mediaDevices.getUserMedia({
-                        video: true,
-                        audio: false
-                    })
-                    .then(function(stream) {
-                        video.srcObject = stream;
-                        video.play();
-                    })
-                    .catch(function(err) {
-                        console.log("An error occurred: " + err);
-                    });
-    
-                video.addEventListener('canplay', function(ev) {
-                    if (!streaming) {
-                        height = video.videoHeight / (video.videoWidth / width);
-    
-                        if (isNaN(height)) {
-                            height = width / (4 / 3);
-                        }
-    
-                        video.setAttribute('width', width);
-                        video.setAttribute('height', height);
-                        canvas.setAttribute('width', width);
-                        canvas.setAttribute('height', height);
-                        streaming = true;
-                    }
-                }, false);
-    
-                startbutton.addEventListener('click', function(ev) {
-                    takepicture();
-                    ev.preventDefault();
-                }, false);
-    
-                clearphoto();
+        (function () {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('videocanvas');
+            const photo = document.getElementById('imageSrc');
+            const startbutton = document.getElementById('startbutton');
+            const cameraSelection = document.getElementById('videoptionsselect');
+
+            let streaming = false;
+            let currentStream = null;
+
+            const constraints = {
+                video: {
+                    width: {
+                        ideal: 720
+                    },
+                    height: {
+                        ideal: 1280
+                    },
+                    deviceId: null
+                },
+                audio: false
             }
-    
-            function clearphoto() {
-                var context = canvas.getContext('2d');
-                context.fillStyle = "#AAA";
-                context.fillRect(0, 0, canvas.width, canvas.height);
-    
-                var data = canvas.toDataURL('image/png');
-                photo.setAttribute('src', data);
+
+            const getCameraSelection = async () => {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                const videoOptions = videoDevices.map(videoDevice => {
+                    console.log('videoDevice: ' + JSON.stringify(videoDevice));
+                    return `<option value="${videoDevice.deviceId}">${videoDevice.label}</option>`;
+                });
+                cameraSelection.innerHTML = videoOptions.join('');
             }
-    
+
             function takepicture() {
-                var context = canvas.getContext('2d');
-                if (width && height) {
-                    canvas.width = width;
-                    canvas.height = height;
-                    context.drawImage(video, 0, 0, width, height);
-    
-                    var data = canvas.toDataURL('image/png');
-                    photo.setAttribute('src', data);
-                } else {
-                    clearphoto();
+                console.log('📸: picture taken');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d')
+                    .drawImage(video, 0, 0);
+
+                photo.src = canvas.toDataURL('image/png');
+                // clear canvas
+                canvas.width = 0;
+                canvas.height = 0;
+            }
+
+            const startStream = async (constrainst, changeMode = false) => {
+                try {
+                    if (currentStream) {
+                        currentStream.getTracks().forEach(track => {
+                            track.stop();
+                        });
+                    }
+
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                    if (!changeMode) {
+                        getCameraSelection();
+                    }
+
+                    video.srcObject = stream;
+                    console.log('video.srcObject: ' + JSON.stringify(video.srcObject));
+                    video.play();
+
+                    streaming = true;
+                } catch (error) {
+                    console.error('Error starting stream: ' + error);
                 }
             }
-    
-            window.addEventListener('load', startup, false);
+
+            startbutton.onclick = async () => {
+                if (streaming) {
+                    takepicture();
+                    return;
+                }
+                if ('mediaDevices' in navigator) {
+                    startStream(constraints);
+                } else {
+                    alert('Your browser does not support mediaDevices');
+                }
+            }
+
+            cameraSelection.onchange = async () => {
+                constraints.video.deviceId = {
+                    exact: cameraSelection.value
+                };
+                startStream(constraints, true);
+            }
         })();
-        </script>
+    </script>
 
 </body>
 

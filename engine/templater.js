@@ -1,6 +1,4 @@
-// import { opencv as cv } from './opencv.js';
-
-class Templater {
+export default class Templater {
     // template: cv.Mat
     constructor(template) {
         // this would be better to load from a file but unsure how to do that
@@ -8,7 +6,7 @@ class Templater {
         // hardcoded, since the loaded template can be resized
         this.rowsFromPng = 1280;
         this.colsFromPng = 565;
-        this.padding = 0.1;
+        this.padding = 0.0;
     }
 
     _getScale(src, dst) {

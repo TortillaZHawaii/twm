@@ -2,6 +2,8 @@ import DiceBoard from '../entities/dice_board.js';
 import Dice from '../entities/dice.js';
 import DiceColor from '../entities/dice_color.js';
 
+import ColorMasks from './color_masks.js';
+
 class DiceGridDetectorV1 {
 
 }

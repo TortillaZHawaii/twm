@@ -1,4 +1,4 @@
-class WhiteBalancer {
+export default class WhiteBalancer {
     static _getAverageGray(grayPixels) {
         let sum = {r: 0, g: 0, b: 0};
         for (let i = 0; i < grayPixels.length; i++) {

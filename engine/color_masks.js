@@ -1,4 +1,4 @@
-class ColorMasks {
+export default class ColorMasks {
     static getBlack(hsv) {
         // Threshold the HSV image to get only black colors 
         let hsvBlack = new cv.Mat();
