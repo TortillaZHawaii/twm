@@ -131,6 +131,14 @@ class DiceGridDetectorV2 {
         let count = 0;
         for (let i = 0; i < contour.rows; i++) {
             let [x, y] = contour.intPtr(i);
+            let saturation = hsv.ucharPtr(y, x)[1];
+            
+            // Skip white and black colors
+            let saturationThreshold = 0.4 * 255;
+            if (saturation < saturationThreshold) {
+                continue;
+            }
+
             let hue = hsv.ucharPtr(y, x)[0];
             hueSum += hue;
             count++;
@@ -144,7 +152,6 @@ class DiceGridDetectorV2 {
         let colors = [
             { name: DiceColor.Yellow, hue: 180 * (0.085 + 0.247) / 2 },
             { name: DiceColor.Red, hue: 0 },
-            { name: DiceColor.Red, hue: 180 },
             { name: DiceColor.Purple, hue: 180 *  (0.711 + 0.902) / 2 },
             { name: DiceColor.Blue, hue: 180 * (0.527 + 0.684) / 2},
             { name: DiceColor.Green, hue: 180 * (0.354 + 0.497) / 2}
@@ -152,12 +159,15 @@ class DiceGridDetectorV2 {
 
         let minDistance = Number.MAX_VALUE;
         let color = null;
+        console.log('Average hue', averageHue);
+
         for (let i = 0; i < colors.length; i++) {
             // TODO: Fix the distance wrap around calculation
             let distance = Math.min(
                 Math.abs(averageHue - colors[i].hue),
                 Math.abs(averageHue - colors[i].hue + 180)
             );
+            console.log('Distance to ', colors[i].name, ' with hue: ', colors[i].hue, 'equals', distance);
 
             if (distance < minDistance) {
                 minDistance = distance;

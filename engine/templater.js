@@ -6,7 +6,7 @@ export default class Templater {
         // hardcoded, since the loaded template can be resized
         this.rowsFromPng = 1280;
         this.colsFromPng = 565;
-        this.padding = 0.0;
+        this.padding = 0.1;
     }
 
     _getScale(src, dst) {
