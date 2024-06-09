@@ -29,12 +29,13 @@ class DiceGridDetectorV2 {
                 let hasColor = color !== null;
                 let hasEye = eye !== null && eye > 0;
 
+                console.log('V2 Result:', row, col, color, eye);
+
                 if (!hasColor || !hasEye) {
                     console.log('Skipping', row, col);
                     continue;
                 }
 
-                console.log(row, col, color, eye);
                 diceBoard.set(row, col,
                     new Dice(color, eye)
                 );
@@ -46,17 +47,19 @@ class DiceGridDetectorV2 {
 
     static _retrieveGridColors(hsv) {
         let dicesMask = ColorMasks.getWithoutBlack(hsv);
-        this._dilateDicesMask(dicesMask);
+        cv.imshow('dicesMask', dicesMask);
+        this._erodeDicesMask(dicesMask);
+        cv.imshow('dicesMaskEroded', dicesMask);
         
         let diceContours = new cv.MatVector();
         let diceHierarchy = new cv.Mat();
         cv.findContours(dicesMask, diceContours, diceHierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-        let expectedSideLength = this._getApproximateDiceSideLength(hsv);
-        let expectedArea = expectedSideLength * expectedSideLength;
-        let margin = 0.5;
-        let minArea = expectedArea * (1 - margin);
-        let maxArea = expectedArea * (1 + margin);
+        // let expectedSideLength = this._getApproximateDiceSideLength(hsv);
+        // let expectedArea = expectedSideLength * expectedSideLength;
+        // let margin = 0.5;
+        // let minArea = expectedArea * (1 - margin);
+        // let maxArea = expectedArea * (1 + margin);
 
         // 4 by 5 grid with nulls
         let colors = new Array(DiceBoard.rows).fill(null)
@@ -65,14 +68,18 @@ class DiceGridDetectorV2 {
         console.log('Found ' + diceContours.size() + ' dice contours');
         for (let i = 0; i < diceContours.size(); i++) {
             let contour = diceContours.get(i);
-            let area = cv.contourArea(contour);
+            // let area = cv.contourArea(contour);
 
-            if (area < minArea || area > maxArea) {
-                console.log('Skipping contour with area', area);
+            // if (area < minArea || area > maxArea) {
+            //     console.log('Skipping contour with area', area);
+            //     continue;
+            // }
+
+            let centroid = cv.moments(contour, false);
+            if (centroid.m00 === 0) {
                 continue;
             }
 
-            let centroid = cv.moments(contour, false);
             let x = centroid.m10 / centroid.m00;
             let y = centroid.m01 / centroid.m00;
 
@@ -93,7 +100,9 @@ class DiceGridDetectorV2 {
 
     static _retrieveGridEyes(hsv) {
         let eyesMask = ColorMasks.getWhite(hsv);
-        this._dilateEyesMask(eyesMask);
+        cv.imshow('eyesMask', eyesMask);
+        this._erodeEyesMask(eyesMask);
+        cv.imshow('eyesMaskEroded', eyesMask);
 
         let eyeContours = new cv.MatVector();
         let eyeHierarchy = new cv.Mat();
@@ -129,6 +138,10 @@ class DiceGridDetectorV2 {
         // Get average hue of the contour
         let hueSum = 0;
         let count = 0;
+        console.log('Contour', JSON.stringify(contour));
+        console.log('Contour size', contour.rows, contour.cols, contour.channels());
+        console.log('Contour area', cv.contourArea(contour));
+
         for (let i = 0; i < contour.rows; i++) {
             let [x, y] = contour.intPtr(i);
             let saturation = hsv.ucharPtr(y, x)[1];
@@ -143,6 +156,7 @@ class DiceGridDetectorV2 {
             hueSum += hue;
             count++;
         }
+        console.log('Hue sum', hueSum, 'Count', count)
         let averageHue = hueSum / count;
 
         // Get closest color based on closest hue
@@ -150,11 +164,11 @@ class DiceGridDetectorV2 {
         // so the value 178 is closer to 2 than for example 6
         // Average is taken from masks in color_masks.js
         let colors = [
-            { name: DiceColor.Yellow, hue: 180 * (0.085 + 0.247) / 2 },
             { name: DiceColor.Red, hue: 0 },
-            { name: DiceColor.Purple, hue: 180 *  (0.711 + 0.902) / 2 },
-            { name: DiceColor.Blue, hue: 180 * (0.527 + 0.684) / 2},
-            { name: DiceColor.Green, hue: 180 * (0.354 + 0.497) / 2}
+            { name: DiceColor.Yellow, hue: 180 * (0.085 + 0.247) / 2 }, // ~29
+            { name: DiceColor.Green, hue: 180 * (0.354 + 0.497) / 2}, // ~76
+            { name: DiceColor.Blue, hue: 180 * (0.527 + 0.684) / 2}, // ~108
+            { name: DiceColor.Purple, hue: 180 *  (0.711 + 0.902) / 2 }, // ~145
         ];
 
         let minDistance = Number.MAX_VALUE;
@@ -174,21 +188,28 @@ class DiceGridDetectorV2 {
                 color = colors[i].name;
             }
         }
+        console.log('Based on hue', averageHue, 'Closest color is', color);
 
         return color;
     }
 
-    static _dilateDicesMask(dicesMask) {
-        let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-        cv.dilate(dicesMask, dicesMask, kernel);
+    static _erodeDicesMask(dicesMask) {
+        let kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+        let anchor = new cv.Point(-1, -1);
+        cv.erode(dicesMask, dicesMask, kernel);
+        cv.morphologyEx(dicesMask, dicesMask, cv.MORPH_CLOSE, kernel, anchor, 2);
         kernel.delete();
     }
 
     static _getApproximateDiceSideLength(img) {
         // there are more columns than rows, 
         // so the result should be a bit more accurate
-        console.log(img.cols, DiceBoard.columns);
-        return img.cols / DiceBoard.columns;
+        return (img.cols / DiceBoard.columns);
+    }
+
+    static _getApproximateEyeRadius(img) {
+        let diceSideLength = this._getApproximateDiceSideLength(img);
+        return diceSideLength / 4 / 2;
     }
 
     static _getGridPosition(y, x, img) {
@@ -198,9 +219,9 @@ class DiceGridDetectorV2 {
         return { row, col };
     }
 
-    static _dilateEyesMask(eyesMask) {
-        let kernel = cv.Mat.ones(1, 1, cv.CV_8U);
-        cv.dilate(eyesMask, eyesMask, kernel);
+    static _erodeEyesMask(eyesMask) {
+        let kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
+        cv.erode(eyesMask, eyesMask, kernel);
         kernel.delete();
     }
 }

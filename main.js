@@ -140,6 +140,17 @@ function runDiceDetection() {
     let detectedV2 = DiceGridDetectorV2.detect(grid);
     console.log('detectedV2: ' + JSON.stringify(detectedV2));
 
+    // Draw the grid on the outputTableV2
+    let outputTableV2 = document.getElementById('outputTableV2');
+    outputTableV2.innerHTML = '';
+    for (let i = 0; i < detectedV2.length; i++) {
+        let row = outputTableV2.insertRow();
+        for (let j = 0; j < detectedV2[i].length; j++) {
+            let cell = row.insertCell();
+            cell.innerHTML = JSON.stringify(detectedV2[i][j]);
+        }
+    }
+
     // Convert image to HSV
     let hsv = cv.Mat.zeros(grid.rows, grid.cols, cv.CV_8UC3);
     cv.cvtColor(grid, hsv, cv.COLOR_RGB2HSV, 0);
