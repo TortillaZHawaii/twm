@@ -32,9 +32,11 @@
             left: 50%;
             transform: translate(-50%, -50%);
             max-width: 100%;
-            max-height: 100%;
+            max-height: 80%;
             z-index: 2;
             pointer-events: none;
+            padding-top: 10%;
+            padding-bottom: 10%;
         }
 
         #canvas {
@@ -99,7 +101,9 @@
             <canvas id="videocanvas" class="d-none"></canvas>
             <div class="camera">
                 <video id="video">Video stream not available.</video>
-                <img id="template" src="./resources/template.png" alt="Template Overlay">
+                <div class="template-padding">
+                    <img id="template" src="./resources/template.png" alt="Template Overlay">
+                </div>
             </div>
             <div>
                 <button id="startbutton">Take photo</button>
