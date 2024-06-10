@@ -3,8 +3,9 @@ export default class DiceBoard {
     static columns = 5;
 
     constructor() {
-        this.dices = new Array(this.rows).fill(null)
-            .map(() => new Array(this.columns).fill(null));
+        this.dices = new Array(DiceBoard.rows).fill(null)
+            .map(() => new Array(DiceBoard.columns).fill(null));
+        console.log('DiceBoard created');
     }
 
     get(row, column) {
@@ -24,6 +25,6 @@ export default class DiceBoard {
         if (column < 0 || column >= this.columns) {
             throw new Error('column must be between 0 and 4');
         }
-        this.dices[row * this.columns + column] = dice;
+        this.dices[row][column] = dice;
     }
 }

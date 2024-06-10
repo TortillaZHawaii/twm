@@ -4,6 +4,8 @@ import DiceGridDetectorV3 from './engine/dice_grid_detector_v3.js';
 
 import Templater from './engine/templater.js';
 import WhiteBalancer from './engine/white_balance.js';
+import DiceBoard from './entities/dice_board.js';
+import DiceColor from './entities/dice_color.js';
 
 function runDiceDetection() {
     var startTime = performance.now();
@@ -40,47 +42,49 @@ function runDiceDetection() {
     // V1 Detection
     let detectedV1 = DiceGridDetectorV1.detect(grid);
     console.log('detectedV1: ' + JSON.stringify(detectedV1));
-    let outputTableV1 = document.getElementById('outputTableV1');
-    outputTableV1.innerHTML = '';
-    for (let i = 0; i < detectedV1.length; i++) {
-        let row = outputTableV1.insertRow();
-        for (let j = 0; j < detectedV1[i].length; j++) {
-            let cell = row.insertCell();
-            cell.innerHTML = JSON.stringify(detectedV1[i][j]);
-        }
-    }
+    printDicesBoard(detectedV1, 'outputTableV1');
 
     // V2 Detection
     let detectedV2 = DiceGridDetectorV2.detect(grid);
     console.log('detectedV2: ' + JSON.stringify(detectedV2));
-    let outputTableV2 = document.getElementById('outputTableV2');
-    outputTableV2.innerHTML = '';
-    for (let i = 0; i < detectedV2.length; i++) {
-        let row = outputTableV2.insertRow();
-        for (let j = 0; j < detectedV2[i].length; j++) {
-            let cell = row.insertCell();
-            cell.innerHTML = JSON.stringify(detectedV2[i][j]);
-        }
-    }
+    printDicesBoard(detectedV2, 'outputTableV2');
 
     // V3 Detection
     let detectedV3 = DiceGridDetectorV3.detect(grid);
     console.log('detectedV3: ' + JSON.stringify(detectedV3));
-    let outputTableV3 = document.getElementById('outputTableV3');
-    outputTableV3.innerHTML = '';
-    for (let i = 0; i < detectedV3.length; i++) {
-        let row = outputTableV3.insertRow();
-        for (let j = 0; j < detectedV3[i].length; j++) {
-            let cell = row.insertCell();
-            cell.innerHTML = JSON.stringify(detectedV3[i][j]);
-        }
-    }
+    printDicesBoard(detectedV3, 'outputTableV3');
     
     src.delete(); 
 
     var endTime = performance.now();
     var timeTaken = endTime - startTime;
     document.getElementById('timeTaken').innerHTML = 'Time taken: ' + timeTaken + 'ms';
+}
+
+function printDicesBoard(board, tableElementId) {
+    let outputTable = document.getElementById(tableElementId);
+    outputTable.innerHTML = '';
+    for (let i = 0; i < DiceBoard.rows; i++) {
+        let row = outputTable.insertRow();
+        for (let j = 0; j < DiceBoard.columns; j++) {
+            let cell = row.insertCell();
+            let dice = board.get(i, j);
+            if (dice === null) {
+                cell.innerHTML = '';
+                continue;
+            }
+            let diceSize = 30;
+            // align text to center and center height
+            let html = '<div style="background-color: ' + dice.color + '; ' +
+                'color: ' + (dice.color === DiceColor.Yellow ? 'black' : 'white') + '; ' +
+                'text-align: center; ' +
+                'line-height: ' + diceSize + 'px; ' +
+                'width: ' + diceSize + 'px; ' +
+                'height: ' + diceSize + 'px;">' +
+                dice.value + '</div>';
+            cell.innerHTML = html;
+        }
+    }
 }
 
 let btnElement = document.getElementById('runDiceDetectionBtn');
