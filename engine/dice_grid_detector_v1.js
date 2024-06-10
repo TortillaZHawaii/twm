@@ -128,14 +128,7 @@ class DiceGridDetectorV1 extends DiceGridDetector {
         let contours = new cv.MatVector();
         let hierarchy = new cv.Mat();
     
-        let M = cv.Mat.ones(3, 3, cv.CV_8U);
-        let N = cv.Mat.ones(2, 2, cv.CV_8U);
-        let anchor = new cv.Point(-1, -1);
-        let fat = new cv.Mat();
-        cv.morphologyEx(hsv, fat, cv.MORPH_OPEN, N, anchor, 3, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
-        cv.dilate(fat, fat, N, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
-    
-        cv.findContours(fat, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+        cv.findContours(hsv, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
     
         if (contoursSrcName === null) {
             return contours;
@@ -149,7 +142,7 @@ class DiceGridDetectorV1 extends DiceGridDetector {
         }
     
         console.log('contoursSrcName: ' + contoursSrcName);
-        cv.imshow(contoursSrcName, fat); //dst);
+        cv.imshow(contoursSrcName, dst);
         dst.delete();
     
         return contours;
