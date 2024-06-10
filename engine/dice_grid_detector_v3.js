@@ -47,9 +47,19 @@ class DiceGridDetectorV3 extends DiceGridDetector {
         let colors = new Array(DiceBoard.rows).fill(null)
             .map(() => new Array(DiceBoard.columns).fill(null));
 
+        let paragraph = document.getElementById('approxAreaV3');
+        let diceLength = this._getApproximateDiceSideLength(hsv);
+        let diceArea = diceLength * diceLength;
+        paragraph.innerHTML = 'Approximate dice area: ' + diceArea;
+
+        let table = document.getElementById('colorTableV3');
+        table.innerHTML = '';
+
         for (let row = 0; row < DiceBoard.rows; row++) {
+            let tableRow = table.insertRow();
             for (let col = 0; col < DiceBoard.columns; col++) {
-                colors[row][col] = this._getDiceColor(hsv, row, col);
+                let cell = tableRow.insertCell();
+                colors[row][col] = this._getDiceColor(hsv, row, col, cell);
             }
         }
 
@@ -92,7 +102,7 @@ class DiceGridDetectorV3 extends DiceGridDetector {
         return eyes;
     }
 
-    static _getDiceColor(hsv, row, col) {
+    static _getDiceColor(hsv, row, col, cellHtml = null) {
         let diceLength = this._getApproximateDiceSideLength(hsv);
         let diceArea = diceLength * diceLength;
         let areaThreshold = diceArea * 0.1;
@@ -155,6 +165,16 @@ class DiceGridDetectorV3 extends DiceGridDetector {
             }
         }
 
+        if (cellHtml) {
+            let style = "border: 1px solid black; border-collapse: collapse;";
+            cellHtml.innerHTML = 'Red: ' + colorsCount[DiceColor.Red] + '<br>' +
+                'Yellow: ' + colorsCount[DiceColor.Yellow] + '<br>' +
+                'Green: ' + colorsCount[DiceColor.Green] + '<br>' +
+                'Blue: ' + colorsCount[DiceColor.Blue] + '<br>' +
+                'Purple: ' + colorsCount[DiceColor.Purple] + '<br>';
+            cellHtml.style = style;
+        }
+
         if (count < areaThreshold) {
             console.log('Skipping dice with area', count, 'less than', areaThreshold);
             return null;
@@ -168,6 +188,8 @@ class DiceGridDetectorV3 extends DiceGridDetector {
                 break;
             }
         }
+
+        
 
         return color;
     }
