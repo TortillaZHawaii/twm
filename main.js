@@ -69,20 +69,25 @@ function printDicesBoard(board, tableElementId) {
         for (let j = 0; j < DiceBoard.columns; j++) {
             let cell = row.insertCell();
             let dice = board.get(i, j);
+            let diceSize = 30;
+            
             if (dice === null) {
-                cell.innerHTML = '';
+                // gray cell
+                cell.innerHTML =
+                    '<div style="background-color: gray; ' +
+                    'width: ' + diceSize + 'px; ' +
+                    'height: ' + diceSize + 'px;"></div>';
                 continue;
             }
-            let diceSize = 30;
             // align text to center and center height
-            let html = '<div style="background-color: ' + dice.color + '; ' +
+            cell.innerHTML =
+                '<div style="background-color: ' + dice.color + '; ' +
                 'color: ' + (dice.color === DiceColor.Yellow ? 'black' : 'white') + '; ' +
                 'text-align: center; ' +
                 'line-height: ' + diceSize + 'px; ' +
                 'width: ' + diceSize + 'px; ' +
                 'height: ' + diceSize + 'px;">' +
                 dice.value + '</div>';
-            cell.innerHTML = html;
         }
     }
 }
