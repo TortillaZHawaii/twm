@@ -115,6 +115,14 @@
             </div>
         </div>
 
+        <h2>Results</h2>
+        <h3>V3 algo</h3>
+        <table id="outputTableV3"></table>
+        <h3>V2 algo</h3>
+        <table id="outputTableV2"></table>
+        <h3>V1 algo</h3>
+        <table id="outputTableV1"></table>
+
         <div class="inputoutput">
             <img id="templateImage" alt="template" src="./resources/template.png"></canvas>
             <div class="caption">Template image.</div>
@@ -138,11 +146,21 @@
             <div class="caption">Grid image cut after white balancing based on two points.</div>
         </div>
         <h3>Analyze the grid</h3>
-        <p>Convert the grid to hsv to make it easier for thresholding.</p>
-        <table id="outputTable"></table>
+        <p>Convert the grid to hsv to make it easier to threshold.</p>
         <div class="inputoutput">
             <canvas id="hsvOutput"></canvas>
             <div class="caption">hsvOutput</div>
+        </div>
+
+        <h2>V3 Algo</h2>
+        <h3>Eyes detection</h3>
+        <div class="inputoutput">
+            <canvas id="eyesMaskV3"></canvas>
+            <div class="caption">Eyes detected by white mask.</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="eyesMaskErodedV3"></canvas>
+            <div class="caption">Eyes mask after erosion.</div>
         </div>
 
         <h2>V2 Algo</h2>
@@ -166,17 +184,7 @@
             <div class="caption">Dices mask after erosion.</div>
         </div>
 
-        <h3>Results</h3>
-        <table id="outputTableV2"></table>
-
         <h2>V1 Algo</h2>
-        <h4>Black</h4>
-        <div class="inputoutput">
-            <canvas id="hsvBlackOutput"></canvas>
-        </div>
-        <div class="inputoutput">
-            <canvas id="hsvBlackOutputContours"></canvas>
-        </div>
         <h4>Yellow</h4>
         <div class="inputoutput">
             <canvas id="hsvYellowOutput"></canvas>
@@ -211,15 +219,6 @@
         </div>
         <div class="inputoutput">
             <canvas id="hsvGreenOutputContours"></canvas>
-        </div>
-        <h3>Opening and closing</h3>
-        <div class="inputoutput">
-            <canvas id="hsvBlackOpened"></canvas>
-            <div class="caption">hsvBlackOpened</div>
-        </div>
-        <div class="inputoutput">
-            <canvas id="canvasOutput"></canvas>
-            <div class="caption">canvasOutput</div>
         </div>
     </div>
     <script>
