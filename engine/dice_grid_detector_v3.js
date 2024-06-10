@@ -95,9 +95,28 @@ class DiceGridDetectorV3 extends DiceGridDetector {
     static _getDiceColor(hsv, row, col) {
         let diceLength = this._getApproximateDiceSideLength(hsv);
         let diceArea = diceLength * diceLength;
-        let areaThreshold = diceArea * 0.5;
+        let areaThreshold = diceArea * 0.1;
 
-        let hueSum = 0;
+        let colorsCount = {
+            [DiceColor.Red]: 0,
+            [DiceColor.Yellow]: 0,
+            [DiceColor.Green]: 0,
+            [DiceColor.Blue]: 0,
+            [DiceColor.Purple]: 0,
+        };
+
+        // Get closest color based on closest hue
+        // Note that we calculate the distance in the hue circle, 
+        // so the value 178 is closer to 2 than for example 6
+        // Average is taken from masks in color_masks.js
+        let colors = [
+            { name: DiceColor.Red, hue: 170 },
+            { name: DiceColor.Yellow, hue: 180 * (0.085 + 0.247) / 2 }, // ~29
+            { name: DiceColor.Green, hue: 180 * (0.354 + 0.497) / 2}, // ~76
+            { name: DiceColor.Blue, hue: 180 * (0.527 + 0.684) / 2}, // ~108
+            { name: DiceColor.Purple, hue: 180 *  (0.711 + 0.902) / 2 }, // ~145
+        ];
+
         let count = 0;
 
         for (let y = row * diceLength; y < (row + 1) * diceLength; y++) {
@@ -107,14 +126,32 @@ class DiceGridDetectorV3 extends DiceGridDetector {
                 
                 // Skip white and black colors
                 let saturationThreshold = 0.4 * 255;
-                // let valueThreshold = 0.4 * 255;
                 if (saturation < saturationThreshold) {
                     continue;
                 }
 
+                let valueThreshold = 0.2 * 255;
+                if (value < valueThreshold) {
+                    continue;
+                }
+
                 let hue = hsv.ucharPtr(y, x)[0];
-                hueSum += hue;
                 count++;
+                
+                let minDistance = Number.MAX_VALUE;
+                let color = null;
+                for (let i = 0; i < colors.length; i++) {
+                    let distance = Math.min(
+                        Math.abs(hue - colors[i].hue),
+                        Math.abs(hue - colors[i].hue + 180)
+                    );
+
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        color = colors[i].name;
+                    }
+                }
+                colorsCount[color]++;
             }
         }
 
@@ -123,40 +160,14 @@ class DiceGridDetectorV3 extends DiceGridDetector {
             return null;
         }
 
-        let averageHue = hueSum / count;
-
-        // Get closest color based on closest hue
-        // Note that we calculate the distance in the hue circle, 
-        // so the value 178 is closer to 2 than for example 6
-        // Average is taken from masks in color_masks.js
-        let colors = [
-            { name: DiceColor.Red, hue: 0 },
-            { name: DiceColor.Yellow, hue: 180 * (0.085 + 0.247) / 2 }, // ~29
-            { name: DiceColor.Green, hue: 180 * (0.354 + 0.497) / 2}, // ~76
-            { name: DiceColor.Blue, hue: 180 * (0.527 + 0.684) / 2}, // ~108
-            { name: DiceColor.Purple, hue: 180 *  (0.711 + 0.902) / 2 }, // ~145
-        ];
-
-        let minDistance = Number.MAX_VALUE;
         let color = null;
 
-        let logMessage = [];
-        logMessage.push('Average hue is', averageHue, 'based on', count, 'pixels');
-
-        for (let i = 0; i < colors.length; i++) {
-            let distance = Math.min(
-                Math.abs(averageHue - colors[i].hue),
-                Math.abs(averageHue - colors[i].hue + 180)
-            );
-            logMessage.push('\n', 'Distance to', colors[i].name, 'with hue:', colors[i].hue, 'equals', distance);
-
-            if (distance < minDistance) {
-                minDistance = distance;
-                color = colors[i].name;
+        for (let key in colorsCount) {
+            if (colorsCount[key] > count / 2) {
+                color = key;
+                break;
             }
         }
-        logMessage.push('\n', 'Closest color is', color);
-        console.log(logMessage.join(' '));
 
         return color;
     }
