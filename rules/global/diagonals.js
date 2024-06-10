@@ -1,6 +1,9 @@
+import { Rule } from '../rule.js';
+import DiceBoard from '../../entities/dice_board.js';
+
 class DiagonalsRule extends Rule {
   constructor() {
-    super('Diagonale', 'TODO');
+    super('Kolorowe przekątne', 'Suma kostek tego samego koloru, które stykają się rogami');
   }
 
   calculateScore(board) {
@@ -24,8 +27,24 @@ class DiagonalsRule extends Rule {
         const rightTop = row > 0 && column < DiceBoard.columns - 1 ? board.get(row - 1, column + 1) : null;
         const rightBottom = row < DiceBoard.rows - 1 && column < DiceBoard.columns - 1 ? board.get(row + 1, column + 1) : null;
 
-        if (leftTop.color === dice.color || leftBottom.color === dice.color || rightTop.color === dice.color || rightBottom.color === dice.color) {
+        if (leftTop !== null && leftTop.color === dice.color) {
           score++;
+          continue;
+        }
+
+        if (leftBottom !== null && leftBottom.color === dice.color) {
+          score++;
+          continue;
+        }
+
+        if (rightTop !== null && rightTop.color === dice.color) {
+          score++;
+          continue;
+        }
+
+        if (rightBottom !== null && rightBottom.color === dice.color) {
+          score++;
+          continue;
         }
       }
     }
@@ -33,3 +52,5 @@ class DiagonalsRule extends Rule {
     return score;
   }
 }
+
+export { DiagonalsRule };

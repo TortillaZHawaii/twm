@@ -1,4 +1,4 @@
-class Rule {
+export class Rule {
     constructor(title, description) {
       if (title === undefined || description === undefined) {
         throw new Error("Both title and description are required");

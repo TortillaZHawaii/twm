@@ -1,3 +1,5 @@
+import { Rule } from './rule.js';
+
 class EmptyDiceRule extends Rule {
     constructor() {
         super('Puste pola', 'Każda pusta kostka w całym witrażu -1 punkt');
@@ -18,3 +20,5 @@ class EmptyDiceRule extends Rule {
         return -emptyCount;
     }
 }
+
+export { EmptyDiceRule };

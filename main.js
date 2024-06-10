@@ -7,6 +7,8 @@ import WhiteBalancer from './engine/white_balance.js';
 import DiceBoard from './entities/dice_board.js';
 import DiceColor from './entities/dice_color.js';
 
+import * as rules from './rules/rules.js';
+
 function runDiceDetection() {
     var startTime = performance.now();
 
@@ -53,6 +55,9 @@ function runDiceDetection() {
     let detectedV3 = DiceGridDetectorV3.detect(grid);
     console.log('detectedV3: ' + JSON.stringify(detectedV3));
     printDicesBoard(detectedV3, 'outputTableV3');
+
+    // Calculate score
+    calculateScore(detectedV3);
     
     src.delete(); 
 
@@ -92,6 +97,81 @@ function printDicesBoard(board, tableElementId) {
     }
 }
 
+const globalRules = [
+    new rules.global.DiverseShadesInRow(),
+    new rules.global.DiverseColorsInRow(),
+    new rules.global.DiverseShadesInColumn(),
+    new rules.global.DiverseColorsInColumn(),
+    new rules.global.DiverseColorsSet(),
+    new rules.global.DiverseShadesSet(),
+    new rules.global.DarkShades(),
+    new rules.global.MediumShades(),
+    new rules.global.LightShades(),
+    new rules.global.DiagonalsRule()
+];
+
+const individualRules = [
+    new rules.individual.RedRule(),
+    new rules.individual.YellowRule(),
+    new rules.individual.GreenRule(),
+    new rules.individual.BlueRule(),
+    new rules.individual.PurpleRule()
+];
+
+function hydrateRuleOptions() {
+    let globalRulesOptions = document.getElementById('globalRules');
+
+    for (let rule of globalRules) {
+        console.log('Rule: ' + rule.title);
+        let option = document.createElement('option');
+        option.value = rule.title;
+        option.text = rule.title;
+        globalRulesOptions.appendChild(option);
+    }
+
+    let individualRuleOptions = document.getElementById('individualRule');
+
+    for (let rule of individualRules) {
+        console.log('Rule: ' + rule.title);
+        let option = document.createElement('option');
+        option.value = rule.title;
+        option.text = rule.title;
+        individualRuleOptions.appendChild(option);
+    }
+}
+
+function calculateScore(board) {
+    let totalScore = 0;
+
+    // Get selected rules
+    let globalRulesOptions = document.getElementById('globalRules');
+    
+    for (let i = 0; i < globalRulesOptions.length; i++) {
+        let option = globalRulesOptions[i];
+        if (option.selected) {
+            let rule = globalRules.find(r => r.title === option.value);
+            let score = rule.calculateScore(board);
+            console.log('Global rule: ' + rule.title + ' score: ' + score);
+            totalScore += score;
+        }
+    }
+
+    let individualRuleOptions = document.getElementById('individualRule');
+    // only one individual rule can be selected
+    for (let i = 0; i < individualRuleOptions.length; i++) {
+        let option = individualRuleOptions[i];
+        if (option.selected) {
+            let rule = individualRules.find(r => r.title === option.value);
+            let score = rule.calculateScore(board);
+            console.log('Individual rule: ' + rule.title + ' score: ' + score);
+            totalScore += score;
+        }
+    }
+    
+    document.getElementById('totalScore').innerHTML = 'Total score: ' + totalScore;
+}
+
+hydrateRuleOptions();
 let btnElement = document.getElementById('runDiceDetectionBtn');
 btnElement.addEventListener('click', runDiceDetection);
 let imgElement = document.getElementById('imageSrc');

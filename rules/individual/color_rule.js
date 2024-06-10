@@ -1,6 +1,9 @@
-const DiceColor = require("../../entities/dice_color");
+import DiceColor from '../../entities/dice_color.js';
+import DiceBoard from '../../entities/dice_board.js';
 
-class _ColorRule extends _Rule {
+import { Rule } from '../rule.js';
+
+class _ColorRule extends Rule {
     constructor(color, title, description) {
         super(title, description);
         this._color = color;
@@ -23,7 +26,7 @@ class _ColorRule extends _Rule {
             }
         }
 
-        return count * this._score;
+        return dotCount * this._score;
     }
 }
 
@@ -57,7 +60,7 @@ class PurpleRule extends _ColorRule {
     }
 }
 
-module.exports = {
+export {
     RedRule,
     YellowRule,
     GreenRule,

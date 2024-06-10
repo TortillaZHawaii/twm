@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Hello OpenCV.js</title>
+    <title>Sagrada dice detection</title>
     <style>
         .inputoutput img,
         .inputoutput canvas {
@@ -83,12 +83,41 @@
     <script type="module" src="./engine/white_balance.js" type="text/javascript"></script>
     <script type="module" src="./engine/dice_grid_detector.js" type="text/javascript"></script>
 
+    <script type="module" src="./rules/rule.js" type="text/javascript"></script>
+
+    <script type="module" src="./rules/empty_dice_rule.js" type="text/javascript"></script>
+
+    <script type="module" src="./rules/global/diagonals.js" type="text/javascript"></script>
+    <script type="module" src="./rules/global/diverse_columns.js" type="text/javascript"></script>
+    <script type="module" src="./rules/global/diverse_rows.js" type="text/javascript"></script>
+    <script type="module" src="./rules/global/diverse_sets.js" type="text/javascript"></script>
+    <script type="module" src="./rules/global/shades.js" type="text/javascript"></script>
+
+    <script type="module" src="./rules/global/global.js" type="text/javascript"></script>
+
+    <script type="module" src="./rules/individual/color_rule.js" type="text/javascript"></script>
+    <script type="module" src="./rules/individual/individual.js" type="text/javascript"></script>
+
+    <script type="module" src="./rules/rules.js" type="text/javascript"></script>
+
     <script type="module" src="./main.js" type="text/javascript"></script>
 </head>
 
 <body>
-    <h2>Hello OpenCV.js</h2>
-    <p id="status">OpenCV.js is loading...</p>
+    <h2>Sagrada dice detection</h2>
+    <p>Take or upload the photo and then click the button to run the dice detection algorithm.</p>
+    <h3>Rules</h3>
+    <!-- Rules options -->
+    <div>
+        <label for="globalRules">Select 3 global rules:</label>
+        <select name="globalRules" id="globalRules" multiple="true">
+        </select>
+        <label for="individualRule">Select single individual rule:</label>
+        <select name="individualRule" id="individualRule">
+        </select>
+        <p id="totalScore">Total score: ...</p>
+    </div>
+
     <button id="runDiceDetectionBtn">Run Dice Detection</button>
     <div>
         <p id="timeTaken"></p>
