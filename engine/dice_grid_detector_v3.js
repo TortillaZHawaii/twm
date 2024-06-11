@@ -33,6 +33,11 @@ class DiceGridDetectorV3 extends DiceGridDetector {
                     continue;
                 }
 
+                if (eye > 6) {
+                    console.warn('V3 Too many eyes', row, col, eye);
+                    eye = 6;
+                }
+
                 diceBoard.set(row, col,
                     new Dice(color, eye)
                 );

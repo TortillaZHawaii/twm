@@ -43,11 +43,16 @@ class DiceGridDetectorV1 extends DiceGridDetector {
                 let hasColor = color !== null && color !== undefined;
                 let hasEye = eye !== null && eye !== undefined && eye > 0;
 
-                console.log('V3 Result:', row, col, color, eye);
+                console.log('V1 Result:', row, col, color, eye);
 
                 if (!hasColor || !hasEye) {
                     console.log('Skipping', row, col);
                     continue;
+                }
+
+                if (eye > 6) {
+                    console.warn('V1 Too many eyes', row, col, eye);
+                    eye = 6;
                 }
 
                 diceBoard.set(row, col,
